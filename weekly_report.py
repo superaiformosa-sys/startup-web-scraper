@@ -432,75 +432,93 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title>新創情報周報 {week}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {{
-    --bg: #0d1117; --card: #161b22; --border: #30363d;
-    --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff;
-    --green: #3fb950; --yellow: #d29922; --red: #f85149;
-    --purple: #bc8cff; --cyan: #79c0ff;
-  }}
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{ background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', -apple-system, 'Segoe UI', sans-serif; padding: 24px; }}
-  .container {{ max-width: 1100px; margin: 0 auto; }}
-  .header {{ text-align: center; padding: 40px 0 30px; border-bottom: 1px solid var(--border); margin-bottom: 30px; }}
-  .header h1 {{ font-size: 2.4rem; font-weight: 800; background: linear-gradient(135deg, #58a6ff, #bc8cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
-  .header .meta {{ color: var(--muted); margin-top: 8px; font-size: 0.95rem; letter-spacing: 0.05em; }}
-  .cards {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }}
-  .card {{ background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; transition: transform 0.2s; }}
-  .card:hover {{ transform: translateY(-2px); }}
-  .card .num {{ font-size: 2.5rem; font-weight: 700; }}
-  .card .label {{ color: var(--muted); font-size: 0.85rem; margin-top: 4px; }}
-  .section {{ margin-bottom: 30px; }}
-  .section-title {{ font-size: 1.1rem; font-weight: 700; color: var(--accent); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }}
-  table {{ width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }}
-  th {{ background: #1c2128; color: var(--muted); padding: 10px 16px; text-align: left; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }}
-  td {{ padding: 10px 16px; border-top: 1px solid var(--border); font-size: 0.92rem; vertical-align: top; }}
-  tr:hover td {{ background: rgba(88, 166, 255, 0.05); }}
-  .bar-wrap {{ background: #1c2128; border-radius: 4px; height: 8px; overflow: hidden; }}
-  .bar-fill {{ height: 100%; border-radius: 4px; background: linear-gradient(90deg, #58a6ff, #bc8cff); }}
-  .badge {{ display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; }}
-  .badge-green {{ background: rgba(63,185,80,0.15); color: var(--green); }}
-  .badge-blue {{ background: rgba(88,166,255,0.15); color: var(--cyan); }}
-  .badge-yellow {{ background: rgba(210,153,34,0.15); color: var(--yellow); }}
-  .badge-purple {{ background: rgba(188,140,255,0.15); color: var(--purple); }}
-  .notable-list {{ list-style: none; }}
-  .notable-list li {{ padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 12px; }}
+  body {{ background: #ffffff; color: #1a1a2e; font-family: 'Noto Sans TC', 'Microsoft JhengHei', Arial, sans-serif; padding: 0; margin: 0; }}
+  .outer {{ background: #f4f6fb; padding: 24px 0; }}
+  .container {{ max-width: 900px; margin: 0 auto; background: #ffffff; border: 1px solid #dde3ee; border-radius: 8px; overflow: hidden; }}
+  /* Header */
+  .header {{ background: #1a3a6e; color: #ffffff; padding: 32px 32px 24px; text-align: center; }}
+  .header h1 {{ font-size: 1.8rem; font-weight: 800; color: #ffffff; margin-bottom: 6px; letter-spacing: .04em; }}
+  .header .meta {{ color: #a8c4f0; font-size: 0.88rem; letter-spacing: .05em; }}
+  /* Summary cards — table-based for Outlook */
+  .cards-table {{ width: 100%; border-collapse: collapse; background: #f0f4fc; }}
+  .cards-table td {{ padding: 18px 0; text-align: center; border-right: 1px solid #dde3ee; width: 25%; }}
+  .cards-table td:last-child {{ border-right: none; }}
+  .card-num {{ font-size: 2rem; font-weight: 800; }}
+  .card-label {{ color: #5a6a8a; font-size: 0.78rem; margin-top: 2px; }}
+  /* Sections */
+  .section {{ padding: 20px 28px; border-bottom: 1px solid #eef0f6; }}
+  .section:last-child {{ border-bottom: none; }}
+  .section-title {{ font-size: 0.95rem; font-weight: 700; color: #1a3a6e; margin-bottom: 14px;
+    padding-bottom: 8px; border-bottom: 2px solid #1a3a6e; text-transform: uppercase; letter-spacing: .06em; }}
+  /* Tables */
+  table.data-table {{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }}
+  table.data-table th {{ background: #eef2fb; color: #3a4a6a; padding: 8px 12px; text-align: left;
+    font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: .05em;
+    border-bottom: 2px solid #c8d4ec; }}
+  table.data-table td {{ padding: 9px 12px; border-bottom: 1px solid #eef0f6; vertical-align: top; color: #1a1a2e; }}
+  table.data-table tr:last-child td {{ border-bottom: none; }}
+  table.data-table tr:nth-child(even) td {{ background: #f8faff; }}
+  /* Bar */
+  .bar-wrap {{ background: #dde3ee; border-radius: 4px; height: 7px; overflow: hidden; min-width: 80px; }}
+  .bar-fill {{ height: 100%; border-radius: 4px; background: #2d7dd2; }}
+  .bar-fill-hotai {{ background: #e07b00; }}
+  /* Badges */
+  .badge {{ display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }}
+  .badge-green {{ background: #d4f4e2; color: #1a7a3e; }}
+  .badge-blue  {{ background: #ddeeff; color: #1a4a8e; }}
+  .badge-orange {{ background: #fdebd0; color: #a05000; }}
+  .badge-red   {{ background: #fde8e8; color: #9a1a1a; }}
+  /* Notable list */
+  .notable-list {{ list-style: none; font-size: 0.88rem; }}
+  .notable-list li {{ padding: 9px 0; border-bottom: 1px solid #eef0f6; display: flex; gap: 10px; align-items: flex-start; }}
   .notable-list li:last-child {{ border-bottom: none; }}
-  .notable-list a {{ color: var(--text); text-decoration: none; }}
-  .notable-list a:hover {{ color: var(--accent); }}
-  .idx {{ color: var(--muted); min-width: 24px; text-align: right; padding-top: 2px; font-size: 0.85rem; }}
-  .footer {{ text-align: center; color: var(--muted); font-size: 0.82rem; padding: 24px 0; border-top: 1px solid var(--border); margin-top: 20px; }}
-  @media (max-width: 700px) {{ .cards {{ grid-template-columns: repeat(2, 1fr); }} }}
+  .notable-list a {{ color: #1a5cb5; text-decoration: underline; }}
+  .notable-list a:hover {{ color: #0d3d7a; }}
+  .idx {{ color: #8a9ab5; font-size: 0.8rem; min-width: 20px; text-align: right; padding-top: 1px; }}
+  /* Hotai section highlight */
+  .hotai-header {{ background: #fff8ee; border-left: 4px solid #e07b00; padding: 10px 14px; margin-bottom: 14px; font-size: 0.82rem; color: #7a4800; border-radius: 0 4px 4px 0; }}
+  /* Footer */
+  .footer {{ background: #f0f4fc; text-align: center; color: #7a8aaa; font-size: 0.78rem; padding: 16px; border-top: 1px solid #dde3ee; }}
+  a {{ color: #1a5cb5; }}
+  @media print {{
+    body, .outer {{ background: #ffffff; }}
+    .container {{ border: none; box-shadow: none; }}
+  }}
 </style>
 </head>
 <body>
+<div class="outer">
 <div class="container">
   <div class="header">
-    <h1>🚀 新創情報周報</h1>
-    <div class="meta">{week} &nbsp;·&nbsp; {date} &nbsp;·&nbsp; 資料來源: {tab}</div>
+    <h1>新創情報周報</h1>
+    <div class="meta">{week} &nbsp;·&nbsp; {date} &nbsp;·&nbsp; {tab}</div>
   </div>
 
-  <div class="cards">
-    <div class="card"><div class="num" style="color:#58a6ff">{total}</div><div class="label">總文章數</div></div>
-    <div class="card"><div class="num" style="color:#3fb950">{processed}</div><div class="label">AI 已分析</div></div>
-    <div class="card"><div class="num" style="color:#d29922">{funding_cnt}</div><div class="label">融資新聞</div></div>
-    <div class="card"><div class="num" style="color:#bc8cff">{notable_cnt}</div><div class="label">重點新聞</div></div>
-  </div>
+  <table class="cards-table">
+    <tr>
+      <td><div class="card-num" style="color:#1a5cb5">{total}</div><div class="card-label">總文章數</div></td>
+      <td><div class="card-num" style="color:#1a7a3e">{processed}</div><div class="card-label">AI 已分析</div></td>
+      <td><div class="card-num" style="color:#a05000">{funding_cnt}</div><div class="card-label">融資新聞</div></td>
+      <td><div class="card-num" style="color:#6a1a8e">{notable_cnt}</div><div class="card-label">重點新聞</div></td>
+    </tr>
+  </table>
 
   <div class="section">
-    <div class="section-title">🌍 地區分佈</div>
-    <table>
+    <div class="section-title">地區分佈</div>
+    <table class="data-table">
       <thead><tr><th>地區</th><th>文章數</th><th>佔比</th><th>文章量</th></tr></thead>
       <tbody>{region_rows}</tbody>
     </table>
   </div>
 
   <div class="section">
-    <div class="section-title">🔥 產業熱度</div>
-    <table>
+    <div class="section-title">產業熱度</div>
+    <table class="data-table">
       <thead><tr><th>產業</th><th>熱度</th><th>文章數</th></tr></thead>
       <tbody>{industry_rows}</tbody>
     </table>
@@ -512,20 +530,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
   <div class="section">
     <div class="section-title">本週重點新聞</div>
-    <div class="card" style="padding: 0;">
-      <ul class="notable-list">{notable_items}</ul>
-    </div>
+    <ul class="notable-list">{notable_items}</ul>
   </div>
 
   <div class="section">
-    <div class="section-title">📰 來源活躍度</div>
-    <table>
+    <div class="section-title">來源活躍度</div>
+    <table class="data-table">
       <thead><tr><th>媒體</th><th>文章數</th></tr></thead>
       <tbody>{source_rows}</tbody>
     </table>
   </div>
 
   <div class="footer">報告產生時間: {generated_at} &nbsp;·&nbsp; Powered by Qwen 2.5 + Claude</div>
+</div>
 </div>
 </body>
 </html>"""
@@ -575,8 +592,8 @@ def render_html(tab_name: str, rows: list[dict], stats: dict) -> str:
                 f"<td>{stage_badge}</td></tr>"
             )
         funding_section = (
-            "<div class='section'><div class='section-title'>💰 融資亮點</div>"
-            "<table><thead><tr><th>#</th><th>標題</th><th>金額</th><th>地區</th><th>輪次</th></tr></thead>"
+            "<div class='section'><div class='section-title'>融資亮點</div>"
+            "<table class='data-table'><thead><tr><th>#</th><th>標題</th><th>金額</th><th>地區</th><th>輪次</th></tr></thead>"
             f"<tbody>{rows_html}</tbody></table></div>"
         )
 
@@ -594,36 +611,40 @@ def render_html(tab_name: str, rows: list[dict], stats: dict) -> str:
             hotai    = doc.get("hotaiFitScore")
             fit      = doc.get("fitScore")
             ml       = doc.get("mlScore")
+            rule     = doc.get("ruleScore")
             tags     = ", ".join(doc.get("fitTags") or [])
             emoji    = REGION_EMOJI.get(region, "")
 
-            def score_bar(v, color):
+            def score_bar(v, css_class="bar-fill"):
                 if v is None: return "—"
                 pct = min(100, v * 10)
+                clr = "#e07b00" if v >= 7 else ("#2d7dd2" if v >= 4 else "#c0392b")
                 return (f"<div style='display:flex;align-items:center;gap:6px'>"
-                        f"<div style='flex:1;background:#21262d;border-radius:4px;height:8px'>"
-                        f"<div style='width:{pct:.0f}%;height:8px;border-radius:4px;background:{color}'></div></div>"
-                        f"<strong style='min-width:28px;color:{color}'>{v:.1f}</strong></div>")
+                        f"<div class='bar-wrap' style='flex:1;min-width:50px'>"
+                        f"<div style='width:{pct:.0f}%;height:7px;border-radius:4px;background:{clr}'></div></div>"
+                        f"<strong style='min-width:26px;color:{clr};font-size:.85rem'>{v:.1f}</strong></div>")
 
-            name_link = f"<a href='{url}' target='_blank'>{name}</a>" if url else name
+            name_link = f"<a href='{url}' target='_blank' style='color:#1a5cb5'>{name}</a>" if url else name
             hotai_rows += (
                 f"<tr><td class='idx'>{i}</td>"
                 f"<td><strong>{name_link}</strong>"
-                f"{'<br><small style=\"color:var(--muted)\">' + name_en + '</small>' if name_en else ''}</td>"
+                f"{'<br><small style=\"color:#7a8aaa\">' + name_en + '</small>' if name_en else ''}</td>"
                 f"<td><span class='badge badge-blue'>{industry}</span></td>"
-                f"<td><span class='badge badge-green'>{stage}</span></td>"
-                f"<td>{score_bar(hotai, '#58a6ff')}</td>"
-                f"<td>{score_bar(fit, '#3fb950')}</td>"
-                f"<td><span style='color:var(--muted);font-size:.85rem'>{ml:.1f if ml is not None else '—'}</span></td>"
+                f"<td><span class='badge badge-orange'>{stage}</span></td>"
+                f"<td>{score_bar(hotai)}</td>"
+                f"<td>{score_bar(fit)}</td>"
+                f"<td style='color:#7a8aaa;font-size:.82rem'>{ml:.1f if ml is not None else '—'}</td>"
+                f"<td style='color:#7a8aaa;font-size:.82rem'>{rule:.1f if rule is not None else '—'}</td>"
                 f"<td>{emoji} {_html.escape(region)}</td>"
-                f"<td><small style='color:var(--muted)'>{_html.escape(tags)}</small></td></tr>"
+                f"<td><small style='color:#7a8aaa'>{_html.escape(tags)}</small></td></tr>"
             )
         hotai_section = (
             "<div class='section'>"
-            "<div class='section-title'>和泰集團適配度排行 <span style='font-size:.8rem;color:var(--muted);font-weight:400'>（AI + ML 混合評分 / 本週最高前10）</span></div>"
-            "<table><thead><tr>"
+            "<div class='section-title'>和泰集團適配度排行</div>"
+            "<div class='hotai-header'>評分公式：25% ML關鍵字 + 50% Qwen語意 + 25% 業務規則（地區/輪次/業務直接命中）&nbsp;·&nbsp;本週最高前10</div>"
+            "<table class='data-table'><thead><tr>"
             "<th>#</th><th>公司</th><th>產業</th><th>輪次</th>"
-            "<th>和泰適配 (0-10)</th><th>新聞品質 (0-10)</th><th>ML分</th><th>地區</th><th>業務標籤</th>"
+            "<th>和泰適配</th><th>新聞品質</th><th>ML</th><th>規則</th><th>地區</th><th>業務標籤</th>"
             "</tr></thead>"
             f"<tbody>{hotai_rows}</tbody></table></div>"
         )

@@ -63,6 +63,55 @@ def get_sheet(tab_name: str) -> gspread.Worksheet:
     return gc.open_by_key(SHEETS_ID).worksheet(tab_name)
 
 
+_SCORED_TAB = "scored_results"
+_SCORED_HEADER = [
+    "extractedAt", "companyName", "companyNameEn", "region", "stage",
+    "fundingAmountRaw", "fundingAmountUSD", "industry",
+    "hotaiFitScore", "fitScore", "mlScore", "ruleScore", "qwenScore", "hotaiQwenScore",
+    "fitTags", "sourceUrl", "description", "summary",
+]
+
+def _get_or_create_scored_sheet(gc) -> gspread.Worksheet:
+    ss = gc.open_by_key(SHEETS_ID)
+    try:
+        return ss.worksheet(_SCORED_TAB)
+    except gspread.WorksheetNotFound:
+        ws = ss.add_worksheet(title=_SCORED_TAB, rows=5000, cols=len(_SCORED_HEADER))
+        ws.append_row(_SCORED_HEADER)
+        ws.freeze(rows=1)
+        logger.info("Created scored_results sheet tab")
+        return ws
+
+def mirror_to_sheets(result: dict) -> None:
+    """Append one scored startup row to the scored_results Sheets tab for human review."""
+    try:
+        gc = get_sheets_client()
+        ws = _get_or_create_scored_sheet(gc)
+        row = [
+            result.get("extractedAt", ""),
+            result.get("companyName", ""),
+            result.get("companyNameEn", ""),
+            result.get("region", ""),
+            result.get("stage", ""),
+            result.get("fundingAmountRaw", ""),
+            result.get("fundingAmountUSD", ""),
+            ", ".join(result.get("industry") or []),
+            result.get("hotaiFitScore", ""),
+            result.get("fitScore", ""),
+            result.get("mlScore", ""),
+            result.get("ruleScore", ""),
+            result.get("qwenScore", ""),
+            result.get("hotaiQwenScore", ""),
+            ", ".join(result.get("fitTags") or []),
+            result.get("sourceUrl", ""),
+            result.get("description", "")[:200],
+            result.get("summary", "")[:200],
+        ]
+        ws.append_row(row, value_input_option="RAW")
+    except Exception as e:
+        logger.warning("mirror_to_sheets failed (non-fatal): %s", e)
+
+
 # ── Content 解析：從 Sheets content 欄還原 title + summary ──
 
 def parse_content_field(content: str) -> tuple[str, str]:
@@ -204,17 +253,24 @@ def _is_valid_company_name(name: str) -> bool:
 
 
 _HOTAI_CONTEXT = (
-    "Hotai Group (和泰集團) is Taiwan's largest automotive conglomerate: "
-    "Toyota/Lexus/Hino exclusive distributor (38.6% market share); "
-    "MaaS services — iRent car-sharing (10K vehicles), yoxi ride-hailing, Ho Ing long-term rental; "
-    "和泰產險 P&C insurance & 和安保險 auto insurance agency; "
-    "和潤企業 auto loans & leasing (largest non-bank financier in Taiwan); "
-    "和泰Pay digital payment + 和泰Points loyalty (3B+ points, 4M members) + co-branded card; "
-    "去趣 travel-planning app (3.5M downloads); "
-    "EVRun EV-charging network + U-POWER investment + MIRAI hydrogen buses; "
-    "和泰AI中台 AI platform — 'AI First' strategy 2026. "
-    "Strategic priorities: MaaS ecosystem, EV/hydrogen transition, InsurTech, "
-    "auto-finance digitization, AI/data platform, smart tourism."
+    "Hotai Group (和泰集團) is Taiwan's largest automotive conglomerate with 13 business verticals: "
+    "① Auto retail — Toyota/Lexus/Hino exclusive distributor (38.6% market share), "
+    "  dealerships: 國都/北都/桃苗/中部/南都/高都/蘭揚; "
+    "② Commercial vehicles — 長源汽車 Taiwan HINO trucks & buses; "
+    "③ Japan commercial vehicles — 南關東日野/北海道日野/東北海道/宮城日野/福島日野; "
+    "④ EV charging & energy — EVRun (起而行綠能/旭電馳/充壹/和潤電能), U-POWER investment, MIRAI hydrogen; "
+    "⑤ Finance — 和潤企業 (auto loans & leasing, largest non-bank financier in Taiwan), 和勁企業; "
+    "⑥ Car rental — 和運租車 (6,000+ vehicle fleet, iRent car-sharing 10K vehicles); "
+    "⑦ China auto retail — 和通汽車投資 + mainland dealerships; "
+    "⑧ Auto products — 車美仕Carmax / 興聯科技 / 凱美士 (automotive electronics & accessories); "
+    "⑨ Vehicle body — 和泰車體製造/銷售, 和泰巴士銷售 (bus body manufacturing); "
+    "⑩ P&C Insurance — 和泰產險, 和安保險; "
+    "⑪ Industrial machinery & warehouse robotics — 和泰豐田物料運搬TMHT (Toyota Material Handling Taiwan); "
+    "⑫ MaaS — yoxi ride-hailing, iRent, 和泰聯網, 去趣 travel app (3.5M downloads), "
+    "   和泰Pay + 和泰Points (3B+ points, 4M members); "
+    "⑬ HVAC — 和泰興業 (Daikin exclusive distributor in Taiwan). "
+    "Strategic priorities 2026: AI First (和泰AI中台), MaaS ecosystem expansion, "
+    "EV/hydrogen transition, InsurTech digitization, warehouse automation, smart tourism."
 )
 
 
@@ -531,13 +587,53 @@ def calc_ml_score(result: dict) -> tuple[float, list[str]]:
     return min(round(score, 1), 10.0), tags
 
 
+_PREFERRED_STAGES   = {"A輪", "B輪", "C輪", "Pre-A", "戰略投資"}  # 和泰較可能投的輪次
+_PREFERRED_REGIONS  = {"台灣", "東南亞"}                          # 地理偏好加分
+
+def _business_rule_score(result: dict) -> float:
+    """
+    業務規則加分（0-10），作為第三個評分維度：
+      地區加分：台灣/東南亞各 +2；中國 +1
+      輪次偏好：A/B/C/Pre-A/戰略 +2；天使/種子 +1；IPO/D輪 +0.5
+      業務名直接命中：companyName 含和泰子公司相關業務詞 +2
+    """
+    score = 0.0
+    region = result.get("region", "")
+    if region in _PREFERRED_REGIONS:
+        score += 2.0
+    elif region == "中國":
+        score += 1.0
+
+    stage = result.get("stage", "")
+    if stage in _PREFERRED_STAGES:
+        score += 2.0
+    elif stage in {"天使輪", "種子輪"}:
+        score += 1.0
+    elif stage in {"IPO", "D輪"}:
+        score += 0.5
+
+    # 直接命中和泰核心業務詞
+    combined = " ".join([
+        result.get("companyName", ""), result.get("description", ""),
+        " ".join(result.get("industry", [])),
+    ]).lower()
+    core_hits = ["mobility", "maas", "insurtech", "telematics", "forklift", "agv",
+                 "ev charging", "充電", "車險", "租車", "叉車", "倉儲", "daikin", "大金",
+                 "bus body", "巴士", "auto finance", "車貸"]
+    if any(h in combined for h in core_hits):
+        score += 2.0
+    return min(score, 10.0)
+
+
 def calc_fit_score(result: dict) -> dict:
     """
-    fitScore     = 70% ML keyword score + 30% Qwen relevanceScore（新聞品質）
-    hotaiFitScore = 70% ML keyword score + 30% Qwen hotaiFitScore（和泰策略適配）
-    若 Qwen 未回傳對應欄位，則 100% 用 ML score。
+    三分量混合評分：
+      fitScore     = 25% ML + 50% Qwen relevanceScore + 25% 業務規則（新聞品質 × 和泰業務）
+      hotaiFitScore = 25% ML + 50% Qwen hotaiFitScore + 25% 業務規則（和泰策略適配）
+    若 Qwen 未回傳對應欄位，補 ML score 填充。
     """
     ml_score, tags = calc_ml_score(result)
+    rule_score = _business_rule_score(result)
 
     def _parse_qwen(field: str) -> float | None:
         try:
@@ -548,18 +644,26 @@ def calc_fit_score(result: dict) -> dict:
             pass
         return None
 
-    qwen_score  = _parse_qwen("relevanceScore")
-    hotai_qwen  = _parse_qwen("hotaiFitScore")
+    qwen_score = _parse_qwen("relevanceScore")
+    hotai_qwen = _parse_qwen("hotaiFitScore")
 
-    final = round(0.7 * ml_score + 0.3 * qwen_score, 1) if qwen_score is not None else ml_score
-    hotai_final = round(0.7 * ml_score + 0.3 * hotai_qwen, 1) if hotai_qwen is not None else ml_score
+    if qwen_score is not None:
+        final = round(0.25 * ml_score + 0.50 * qwen_score + 0.25 * rule_score, 1)
+    else:
+        final = round(0.50 * ml_score + 0.50 * rule_score, 1)
+
+    if hotai_qwen is not None:
+        hotai_final = round(0.25 * ml_score + 0.50 * hotai_qwen + 0.25 * rule_score, 1)
+    else:
+        hotai_final = round(0.50 * ml_score + 0.50 * rule_score, 1)
 
     return {
-        "fitScore":      final,
-        "fitTags":       tags,
-        "mlScore":       ml_score,
-        "qwenScore":     qwen_score,
-        "hotaiFitScore": hotai_final,
+        "fitScore":       min(round(final, 1), 10.0),
+        "fitTags":        tags,
+        "mlScore":        ml_score,
+        "ruleScore":      rule_score,
+        "qwenScore":      qwen_score,
+        "hotaiFitScore":  min(round(hotai_final, 1), 10.0),
         "hotaiQwenScore": hotai_qwen,
     }
 
@@ -757,6 +861,7 @@ def process_raw_articles_by_region(region: str, tab_name: str) -> dict:
                 result["fitScore"]       = _clamp(fd["fitScore"])
                 result["fitTags"]        = fd["fitTags"]
                 result["mlScore"]        = _clamp(fd["mlScore"])
+                result["ruleScore"]      = _clamp(fd["ruleScore"])
                 result["hotaiFitScore"]  = _clamp(fd["hotaiFitScore"])
                 if fd["qwenScore"] is not None:
                     result["qwenScore"] = _clamp(fd["qwenScore"])
@@ -766,6 +871,7 @@ def process_raw_articles_by_region(region: str, tab_name: str) -> dict:
                 # Idempotent write: URL hash as doc_id prevents duplicates on re-run
                 doc_id = hashlib.md5(url.encode()).hexdigest()[:16]
                 firestore_write(col_ref, result, doc_id=doc_id)
+                mirror_to_sheets(result)   # mirror scores to Sheets for human review
                 ws.update_cell(item["row"], 7, "true")
                 saved += 1
                 logger.info("   ✅ %s [fit:%.1f hotai:%.1f]", company, result["fitScore"], result["hotaiFitScore"])

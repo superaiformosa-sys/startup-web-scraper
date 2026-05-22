@@ -53,54 +53,79 @@ SOURCES = [
 
 REGION_MAP = {s["id"]: s["region"] for s in SOURCES}
 
-# 和泰集團八大業務柱對應關鍵字（用於 ML 特徵評分）
-# 業務背景：Toyota/Lexus/Hino 總代理、iRent/yoxi/和運租車 MaaS、和泰產險/和安保險、
-#           和潤企業汽車金融、和泰Pay/Points/聯名卡、去趣旅遊 App、EVRun 充電、AI 中台
+# 和泰集團13大業務版圖對應關鍵字（用於 ML 特徵評分）
+# 完整版圖：①汽車代理經銷 ②商用車 ③日本商用車 ④充電/能源 ⑤金融
+#           ⑥租車 ⑦大陸經銷 ⑧車用產品 ⑨車體 ⑩產險 ⑪產機倉儲機器人
+#           ⑫MaaS ⑬空調（大金台灣總代理）
 FIT_KEYWORDS = {
-    # iRent、yoxi、和運租車、MaaS 生態
-    "MaaS_Mobility": [
-        "MaaS", "共享汽車", "car sharing", "ride hailing", "叫車", "租車", "車隊管理",
-        "fleet management", "短租", "長租", "共乘", "出行平台", "mobility service",
-        "乘車", "代駕", "派遣", "mobility as a service", "shared mobility",
+    # ① 汽車代理經銷：和泰汽車/國都/北都/桃苗/中部/南都/高都/蘭揚
+    "AutoRetail": [
+        "汽車經銷", "車輛銷售", "車款", "dealer", "dealership", "DMS", "CRM dealer",
+        "車商管理", "試乘", "車展", "新車銷售", "售後服務", "car retail",
     ],
-    # EVRun 充電網、U-POWER 投資、Toyota MIRAI 氫能
+    # ② ③ 商用車（長源HINO、日本日野各公司）
+    "CommercialVehicle": [
+        "商用車", "卡車", "貨車", "巴士", "公車", "truck", "commercial vehicle",
+        "bus", "HINO", "日野", "重型車", "fleet vehicle", "車隊採購",
+    ],
+    # ④ 充電樁及能源（起而行、旭電馳、充壹、和潤電能EVRun）
     "EV_Charging": [
-        "電動車", "EV", "充電樁", "充電站", "充電基礎設施", "氫能", "氫燃料",
-        "hydrogen", "FCEV", "換電", "battery swap", "CPO", "充電管理", "smart charging",
-        "charging infrastructure", "ev charging", "電動化", "electrification",
+        "電動車", "EV", "充電樁", "充電站", "充電網路", "氫能", "氫燃料", "氫電",
+        "hydrogen", "FCEV", "換電", "battery swap", "CPO", "充電管理",
+        "smart charging", "ev charging", "電動化", "electrification",
+        "充電基礎設施", "charging infrastructure", "綠能", "能源管理",
     ],
-    # 車聯網、ADAS、智慧座艙、預測保養
-    "AutoTech_ADAS": [
-        "ADAS", "自動駕駛", "autonomous", "車聯網", "V2X", "OBD", "telematics",
-        "車載", "智慧座艙", "cockpit", "預測保養", "predictive maintenance",
-        "connected vehicle", "車輛感測", "lidar", "雷達", "over-the-air", "OTA",
-    ],
-    # 和泰產險、和安保險、UBI 車險
-    "InsurTech": [
-        "保險", "insurtech", "UBI", "車險", "usage-based insurance", "telematics insurance",
-        "理賠自動化", "核保", "再保", "數位保險", "嵌入式保險", "embedded insurance",
-        "insurance tech", "parametric insurance",
-    ],
-    # 和潤企業：汽車貸款、融資租賃
+    # ⑤ 金融（和潤企業6592、和勁企業）
     "AutoFinance": [
         "汽車貸款", "車貸", "融資租賃", "auto finance", "leasing", "分期付款",
         "殘值", "balloon payment", "fleet financing", "設備融資", "auto loan",
+        "汽車金融", "vehicle finance", "動產擔保", "BNPL vehicle",
     ],
-    # 和泰Pay、和泰Points、和泰聯名卡：點數經濟與支付
-    "Loyalty_Payment": [
-        "點數", "loyalty", "會員生態", "支付", "payment", "digital wallet", "信用卡",
-        "co-branded card", "reward", "回饋", "fintech", "數位支付", "points economy",
+    # ⑥ 租車（和運租車）
+    "CarRental_Fleet": [
+        "租車", "car rental", "車隊管理", "fleet management", "長租", "短租",
+        "subscription car", "汽車訂閱", "共享汽車", "car sharing", "leasing platform",
     ],
-    # 和泰 AI 中台、AI First 戰略：生成式 AI、資料平台
+    # ⑧ 車用產品（車美仕Carmax、興聯科技、凱美士）
+    "AutoProduct": [
+        "車用電子", "汽車零件", "車載系統", "OBD", "行車記錄器", "dashcam",
+        "automotive electronics", "aftermarket", "車用配件", "car accessory",
+        "ADAS sensor", "車輛感測", "lidar", "雷達", "V2X", "車載AI",
+    ],
+    # ⑨ 車體（和泰車體製造/銷售、和泰巴士銷售）
+    "VehicleBody": [
+        "車體製造", "巴士車體", "bus body", "vehicle body", "特殊車輛",
+        "electric bus", "電動巴士", "低地板巴士", "coach", "廂型車",
+    ],
+    # ⑩ 產險（和泰產險、和安保險）
+    "InsurTech": [
+        "保險科技", "insurtech", "UBI", "車險", "usage-based insurance",
+        "telematics insurance", "理賠自動化", "核保AI", "再保", "數位保險",
+        "嵌入式保險", "embedded insurance", "parametric insurance", "保費定價",
+    ],
+    # ⑪ 產機、倉儲、機器人（和泰豐田物料運搬TMHT）
+    "IndustrialRobot": [
+        "叉車", "堆高機", "forklift", "AGV", "AMR", "倉儲自動化",
+        "warehouse automation", "物料搬運", "material handling", "工業機器人",
+        "industrial robot", "智慧倉儲", "smart warehouse", "WMS", "自動倉",
+    ],
+    # ⑫ MaaS（yoxi、iRent、和泰聯網、去趣旅遊）
+    "MaaS_Mobility": [
+        "MaaS", "ride hailing", "叫車", "yoxi", "iRent", "共乘", "出行平台",
+        "mobility service", "mobility as a service", "shared mobility",
+        "旅遊規劃", "travel platform", "跨境旅遊", "trip planning",
+        "和泰Pay", "points economy", "loyalty platform", "數位支付",
+    ],
+    # ⑬ 空調（和泰興業 — 大金Daikin台灣總代理）
+    "HVAC_Energy": [
+        "空調", "冷氣", "HVAC", "大金", "Daikin", "冷凍空調", "智慧空調",
+        "building energy", "能源效率", "EMS", "碳管理", "節能", "building automation",
+    ],
+    # AI / 數位平台（和泰AI中台、AI First戰略）— 橫跨多業務的水平能力
     "AI_DataPlatform": [
         "人工智慧", "機器學習", "AI", "大數據", "data platform", "個人化",
-        "personalization", "預測分析", "generative AI", "LLM", "AI platform",
-        "數位轉型", "API platform", "生成式", "大模型",
-    ],
-    # 去趣 App：旅遊規劃、跨境出行
-    "TravelTech": [
-        "旅遊科技", "travel tech", "旅行規劃", "trip planning", "tourism platform",
-        "訂房", "訂票", "出行", "跨境旅遊", "smart tourism", "旅遊 APP",
+        "generative AI", "LLM", "AI platform", "數位轉型", "大模型",
+        "預測分析", "predictive analytics", "API platform",
     ],
 }
 
