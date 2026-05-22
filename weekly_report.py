@@ -106,18 +106,29 @@ def load_single_tab(tab_name: str) -> list[dict]:
 
 
 def load_scored_map(collection: str) -> dict:
-    """從 Firebase 讀取本週所有已評分文章，以 sourceUrl 為 key。
-    用於在報告中逐篇顯示和泰適配度評分。"""
+    """從 Firebase 讀取近 7 天所有 startups_* 集合的已評分文章，以 sourceUrl 為 key。
+    掃描多個集合確保不因日期差異遺漏資料。"""
     try:
         from firebase_client import get_db
-        db = get_db()
+        import datetime as _dt
+        db     = get_db()
         result = {}
-        for doc in db.collection(collection).stream():
-            d = doc.to_dict()
-            url = d.get("sourceUrl", "")
-            if url:
-                result[url] = d
-        logger.info("load_scored_map: %d scored docs from %s", len(result), collection)
+        today  = _dt.date.today()
+        # Scan collections for last 7 days (pipeline may write to a different date's collection)
+        for delta in range(8):
+            col_name = "startups_" + (today - _dt.timedelta(days=delta)).isoformat()
+            try:
+                for doc in db.collection(col_name).stream():
+                    d = doc.to_dict()
+                    url = d.get("sourceUrl", "")
+                    if url and url not in result:
+                        # Normalise: use fitScore as hotaiFitScore fallback for pre-field docs
+                        if d.get("hotaiFitScore") is None and d.get("fitScore") is not None:
+                            d["hotaiFitScore"] = d["fitScore"]
+                        result[url] = d
+            except Exception:
+                pass  # collection may not exist for this date
+        logger.info("load_scored_map: %d total scored docs (last 7 days)", len(result))
         return result
     except Exception as e:
         logger.warning("load_scored_map failed: %s", e)
@@ -562,7 +573,7 @@ def _make_summary_page(tab_name: str, stats: dict, hotai_docs: list[dict],
                 f"<td><span class='badge badge-orange'>{stage}</span></td>"
                 f"<td>{_score_badge(hotai)}</td>"
                 f"<td>{_score_badge(fit)}</td>"
-                f"<td style='color:#7a8aaa'>{ml:.1f if ml is not None else '-'}</td>"
+                f"<td style='color:#7a8aaa'>{'%.1f' % ml if ml is not None else '-'}</td>"
                 f"<td>{region}</td>"
                 f"<td><small style='color:#7a8aaa'>{tags}</small></td></tr>"
             )
@@ -623,57 +634,67 @@ def _make_summary_page(tab_name: str, stats: dict, hotai_docs: list[dict],
 </div>"""
 
 
-def _make_region_page(region: str, articles: list[dict],
-                      scored_map: dict, source_map: dict) -> str:
-    if not articles:
-        return ""
+def _make_region_page(region: str, scored_map: dict) -> str:
+    """Build a page from Firebase scored docs for this region only."""
+    docs = sorted(
+        [d for d in scored_map.values() if d.get("region") == region],
+        key=lambda d: (d.get("hotaiFitScore") or d.get("fitScore") or 0),
+        reverse=True,
+    )
+    if not docs:
+        return (f"<div class='region-page'>"
+                f"<div class='region-header'><h2>{_html.escape(region)} 新創投資情報</h2>"
+                f"<div class='sub'>本週尚無已評分文章（請先執行 python main.py 完整流程）</div></div></div>")
 
-    # Sort: scored desc first, then unscored alphabetically
-    def sort_key(a):
-        doc = scored_map.get(a["url"], {})
-        s = doc.get("hotaiFitScore")
-        return (0 if s is None else 1, -(s or 0))
-
-    sorted_articles = sorted(articles, key=sort_key)
-
-    scored_count = sum(1 for a in articles if a["url"] in scored_map)
     rows_html = ""
-    for i, article in enumerate(sorted_articles, 1):
-        url      = article.get("url", "")
-        title    = _html.escape(article.get("title", "")[:90])
-        src_id   = article.get("source", "")
-        src_name = _html.escape(source_map.get(src_id, src_id))
-        fetched  = article.get("fetchedAt", "")[:10]
+    for i, doc in enumerate(docs, 1):
+        url      = _html.escape(doc.get("sourceUrl") or "")
+        company  = _html.escape(doc.get("companyName") or doc.get("companyNameEn") or "—")
+        name_en  = _html.escape(doc.get("companyNameEn") or "")
+        industry = _html.escape(", ".join((doc.get("industry") or [])[:2]) or "—")
+        stage    = _html.escape(doc.get("stage") or "—")
+        summary  = _html.escape((doc.get("summary") or doc.get("description") or "")[:120])
+        investors= _html.escape(", ".join((doc.get("investors") or [])[:3]))
+        funding  = _html.escape(doc.get("fundingAmountRaw") or "")
+        tags     = _html.escape(", ".join((doc.get("fitTags") or [])[:3]))
+        extracted= (doc.get("extractedAt") or "")[:10]
+        hotai    = doc.get("hotaiFitScore")
+        fit      = doc.get("fitScore")
+        ml       = doc.get("mlScore")
 
-        doc     = scored_map.get(url, {})
-        company = _html.escape(doc.get("companyName") or doc.get("companyNameEn") or "")
-        stage   = _html.escape(doc.get("stage") or "")
-        hotai   = doc.get("hotaiFitScore")
-        tags    = _html.escape(", ".join((doc.get("fitTags") or [])[:2]))
+        company_cell = f"<a href='{url}' target='_blank'><strong>{company}</strong></a>" if url else f"<strong>{company}</strong>"
+        if name_en and name_en != company:
+            company_cell += f"<br><small style='color:#7a8aaa'>{name_en}</small>"
 
-        title_cell = f"<a href='{_html.escape(url)}' target='_blank'>{title}</a>" if url else title
-        company_cell = f"<strong>{company}</strong>" + (f" <span class='badge badge-orange'>{stage}</span>" if stage else "") if company else "<span style='color:#b0bac8'>-</span>"
+        stage_html   = f"<span class='badge badge-orange'>{stage}</span>" if stage != "—" else ""
+        funding_html = f"<span class='badge badge-green'>{funding}</span>" if funding else ""
 
         rows_html += (
             f"<tr><td class='idx'>{i}</td>"
-            f"<td>{title_cell}</td>"
-            f"<td style='color:#5a6a8a;white-space:nowrap'>{src_name}</td>"
-            f"<td style='color:#8a9ab5;white-space:nowrap'>{fetched}</td>"
-            f"<td>{company_cell}</td>"
+            f"<td>{company_cell}<br><small style='color:#5a6a8a'>{summary}</small></td>"
+            f"<td><span class='badge badge-blue'>{industry}</span><br>{stage_html} {funding_html}</td>"
+            f"<td style='color:#7a8aaa;font-size:.78rem'>{investors}</td>"
             f"<td style='color:#7a8aaa;font-size:.78rem'>{tags}</td>"
-            f"<td style='text-align:center'>{_score_badge(hotai)}</td></tr>"
+            f"<td style='color:#8a9ab5;white-space:nowrap'>{extracted}</td>"
+            f"<td style='text-align:center'>{_score_badge(hotai)}</td>"
+            f"<td style='text-align:center'>{_score_badge(fit)}</td>"
+            f"<td style='text-align:center;color:#8a9ab5'>{'%.1f' % ml if ml is not None else '-'}</td>"
+            f"</tr>"
         )
 
     return f"""<div class='region-page'>
   <div class='region-header'>
     <h2>{_html.escape(region)} 新創投資情報</h2>
-    <div class='sub'>共 {len(articles)} 篇文章 &nbsp;·&nbsp; 其中 {scored_count} 篇已 AI 評分</div>
+    <div class='sub'>AI 已評分 {len(docs)} 家新創 &nbsp;·&nbsp; 依和泰適配度排序</div>
   </div>
-  <div class='hotai-note'>和泰適配度：7-10 高度相關 &nbsp;·&nbsp; 4-6 中度相關 &nbsp;·&nbsp; 1-3 低度相關 &nbsp;·&nbsp; - 尚未評分</div>
+  <div class='hotai-note'>評分公式：25% ML關鍵字 + 50% Qwen語意 + 25% 業務規則（地區/輪次/業務命中）</div>
   <table class='dt'>
     <thead><tr>
-      <th>#</th><th>標題</th><th>來源</th><th>日期</th><th>公司 / 輪次</th><th>業務標籤</th>
-      <th style='text-align:center;min-width:70px'>和泰適配度</th>
+      <th>#</th><th>公司 / 摘要</th><th>產業 / 輪次 / 金額</th>
+      <th>投資方</th><th>業務標籤</th><th>評分日期</th>
+      <th style='text-align:center'>和泰適配</th>
+      <th style='text-align:center'>新聞品質</th>
+      <th style='text-align:center'>ML</th>
     </tr></thead>
     <tbody>{rows_html}</tbody>
   </table>
@@ -685,27 +706,18 @@ def render_html(tab_name: str, rows: list[dict], stats: dict,
     if scored_map is None:
         scored_map = {}
 
-    today      = datetime.date.today()
-    source_map = {s["id"]: s["name"] for s in SOURCES}
+    today = datetime.date.today()
 
-    # Hotai top 10 from scored_map (all scored docs, not just the query limit)
+    # Hotai top 10 from scored_map (all scored docs, sorted — no Firebase query limit)
     hotai_docs = sorted(
         [d for d in scored_map.values() if d.get("hotaiFitScore") is not None],
         key=lambda d: d["hotaiFitScore"], reverse=True,
     )[:10]
 
-    # Group articles by region
-    by_region: dict[str, list] = {}
-    for row in rows:
-        r = row.get("region", "全球")
-        by_region.setdefault(r, []).append(row)
-
-    summary  = _make_summary_page(tab_name, stats, hotai_docs, today)
-    pages    = [summary]
+    summary = _make_summary_page(tab_name, stats, hotai_docs, today)
+    pages   = [summary]
     for region in _REGION_ORDER:
-        pg = _make_region_page(region, by_region.get(region, []), scored_map, source_map)
-        if pg:
-            pages.append(pg)
+        pages.append(_make_region_page(region, scored_map))
 
     body = "\n".join(pages)
     return f"""<!DOCTYPE html>

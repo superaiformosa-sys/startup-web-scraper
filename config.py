@@ -28,27 +28,31 @@ MAX_GEMINI_PER_RUN      = 20
 
 SOURCES = [
     # ── 台灣 ──
-    {"id": "bnext",      "name": "數位時代",          "rss": "https://www.bnext.com.tw/rss",                                                 "region": "台灣", "enabled": True},
-    {"id": "meet",       "name": "Meet 創業小聚",      "rss": "https://meet.bnext.com.tw/rss",                                               "region": "台灣", "enabled": True},
-    {"id": "tc_tw",      "name": "TechCrunch TW RSS",  "rss": "https://news.google.com/rss/search?q=新創+募資+台灣&hl=zh-TW&gl=TW&ceid=TW:zh-Hant", "region": "台灣", "enabled": True},
+    {"id": "bnext",      "name": "數位時代",            "rss": "https://www.bnext.com.tw/rss",                                                        "region": "台灣", "enabled": True},
+    {"id": "meet",       "name": "Meet 創業小聚",        "rss": "https://meet.bnext.com.tw/rss",                                                       "region": "台灣", "enabled": True},
+    {"id": "tc_tw",      "name": "TechCrunch TW",        "rss": "https://news.google.com/rss/search?q=新創+募資+台灣&hl=zh-TW&gl=TW&ceid=TW:zh-Hant",  "region": "台灣", "enabled": True},
+    {"id": "gn_tw1",     "name": "台灣新創 Google News", "rss": "https://news.google.com/rss/search?q=台灣+新創+融資+完成&hl=zh-TW&gl=TW&ceid=TW:zh-Hant","region": "台灣", "enabled": True},
     # ── 中國 ──
-    {"id": "36kr",       "name": "36氪",              "rss": "https://36kr.com/feed",                                                        "region": "中國", "enabled": True},
-    {"id": "lieyunwang", "name": "獵雲網",             "rss": "https://www.lieyunwang.com/rss.xml",                                          "region": "中國", "enabled": True},
-    {"id": "kr_asia",    "name": "KrASIA",             "rss": "https://kr-asia.com/feed",                                                     "region": "中國", "enabled": True},
-    {"id": "cn_google",  "name": "中國新創 Google News","rss": "https://news.google.com/rss/search?q=中国+创业+融资+startup&hl=zh-CN&gl=CN&ceid=CN:zh-Hans", "region": "中國", "enabled": True},
-    {"id": "cn_google2", "name": "中國科技 Google News","rss": "https://news.google.com/rss/search?q=中国+科技+独角兽+IPO&hl=zh-CN&gl=CN&ceid=CN:zh-Hans", "region": "中國", "enabled": True},
+    {"id": "36kr",       "name": "36氪",               "rss": "https://36kr.com/feed",                                                               "region": "中國", "enabled": True},
+    {"id": "lieyunwang", "name": "獵雲網",              "rss": "https://www.lieyunwang.com/rss.xml",                                                  "region": "中國", "enabled": True},
+    {"id": "cn_google",  "name": "中國新創 Google News", "rss": "https://news.google.com/rss/search?q=中国+创业+融资+startup&hl=zh-CN&gl=CN&ceid=CN:zh-Hans", "region": "中國", "enabled": True},
+    {"id": "cn_google2", "name": "中國科技 Google News", "rss": "https://news.google.com/rss/search?q=中国+科技+独角兽+IPO&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",   "region": "中國", "enabled": True},
     # ── 東南亞 ──
-    {"id": "e27_gn",     "name": "e27 Google News",   "rss": "https://news.google.com/rss/search?q=e27+startup+funding+southeast+asia&hl=en&gl=SG&ceid=SG:en", "region": "東南亞", "enabled": True},
-    {"id": "dealstreet", "name": "DealStreetAsia",     "rss": "https://www.dealstreetasia.com/feed/",                                         "region": "東南亞", "enabled": True},
-    {"id": "techinasia", "name": "Tech in Asia",       "rss": "https://www.techinasia.com/feed",                                              "region": "東南亞", "enabled": True},
-    {"id": "sea_google", "name": "SEA新創 Google News", "rss": "https://news.google.com/rss/search?q=startup+funding+series+southeast+asia+2025&hl=en&gl=SG&ceid=SG:en", "region": "東南亞", "enabled": True},
-    {"id": "sea_google2","name": "SEA科技 Google News", "rss": "https://news.google.com/rss/search?q=Indonesia+Vietnam+Thailand+startup+raised&hl=en&gl=SG&ceid=SG:en", "region": "東南亞", "enabled": True},
+    # Nikkei Asia: broad Asia tech/business, 50 recent articles per fetch
+    {"id": "nikkei_asia","name": "Nikkei Asia",          "rss": "https://asia.nikkei.com/rss/feed/nar",                                                "region": "東南亞", "enabled": True},
+    # Technode: Asia tech news, 14+ recent articles
+    {"id": "technode",   "name": "Technode",              "rss": "https://technode.com/feed/",                                                          "region": "東南亞", "enabled": True},
+    # Google News country-specific queries (no year filter — returns individual company news)
+    {"id": "sea_sg",     "name": "Singapore Startups",    "rss": "https://news.google.com/rss/search?q=startup+raised+funding+Singapore&hl=en&gl=SG&ceid=SG:en",        "region": "東南亞", "enabled": True},
+    {"id": "sea_id_vn",  "name": "ID/VN Startups",        "rss": "https://news.google.com/rss/search?q=startup+raised+funding+Indonesia+OR+Vietnam&hl=en&gl=SG&ceid=SG:en","region": "東南亞", "enabled": True},
+    {"id": "sea_apac",   "name": "APAC Startup Funding",  "rss": "https://news.google.com/rss/search?q=%22raised%22+%22series%22+startup+%22Asia%22+%22million%22&hl=en&gl=SG&ceid=SG:en","region": "東南亞", "enabled": True},
     # ── 全球 ──
-    {"id": "tc_startup", "name": "TechCrunch Startups","rss": "https://techcrunch.com/category/startups/feed/",                               "region": "全球", "enabled": True},
-    {"id": "venturebeat","name": "VentureBeat",        "rss": "https://venturebeat.com/category/business/feed/",                              "region": "全球", "enabled": True},
-    {"id": "crunchbase", "name": "Crunchbase News",    "rss": "https://news.crunchbase.com/feed/",                                            "region": "全球", "enabled": True},
-    {"id": "global_gn",  "name": "全球新創 Google News","rss": "https://news.google.com/rss/search?q=startup+funding+series+A+B+2025&hl=en&gl=US&ceid=US:en", "region": "全球", "enabled": True},
-    {"id": "global_gn2", "name": "全球科技 Google News","rss": "https://news.google.com/rss/search?q=unicorn+IPO+venture+capital+2025&hl=en&gl=US&ceid=US:en", "region": "全球", "enabled": True},
+    {"id": "tc_startup", "name": "TechCrunch Startups",   "rss": "https://techcrunch.com/category/startups/feed/",                                      "region": "全球", "enabled": True},
+    {"id": "venturebeat","name": "VentureBeat",            "rss": "https://venturebeat.com/category/business/feed/",                                     "region": "全球", "enabled": True},
+    {"id": "sifted_eu",  "name": "Sifted (Europe)",        "rss": "https://sifted.eu/feed/",                                                             "region": "全球", "enabled": True},
+    # Global Google News: no year in query avoids stale aggregate reports
+    {"id": "global_gn",  "name": "全球新創 Google News",   "rss": "https://news.google.com/rss/search?q=startup+funding+%22series+A%22+OR+%22series+B%22+raised&hl=en&gl=US&ceid=US:en","region": "全球", "enabled": True},
+    {"id": "global_gn2", "name": "全球科技 Google News",   "rss": "https://news.google.com/rss/search?q=unicorn+IPO+venture+capital+raised+million&hl=en&gl=US&ceid=US:en",              "region": "全球", "enabled": True},
 ]
 
 REGION_MAP = {s["id"]: s["region"] for s in SOURCES}
