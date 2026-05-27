@@ -647,7 +647,8 @@ REGION_DISPLAY_MIN = {"台灣": 10, "中國": 10, "東南亞":  5, "全球": 10}
 
 # 東南亞頁面排除這些來源（實際報導中國/台灣內容，但被標記為東南亞）
 _SEA_EXCLUDE_SOURCES = {"technode", "cn_google", "cn_google2", "36kr", "lieyunwang",
-                        "bnext", "meet", "tc_tw", "gn_tw1"}
+                        "bnext", "meet", "tc_tw", "gn_tw1",
+                        "techorange", "inside_tw", "gn_tw_fund"}  # 新增台灣來源一併排除
 
 
 def _make_region_page(region: str, scored_map: dict) -> str:

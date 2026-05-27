@@ -28,10 +28,14 @@ MAX_GEMINI_PER_RUN      = 20
 
 SOURCES = [
     # ── 台灣 ──
-    {"id": "bnext",      "name": "數位時代",            "rss": "https://www.bnext.com.tw/rss",                                                        "region": "台灣", "enabled": True},
-    {"id": "meet",       "name": "Meet 創業小聚",        "rss": "https://meet.bnext.com.tw/rss",                                                       "region": "台灣", "enabled": True},
-    {"id": "tc_tw",      "name": "TechCrunch TW",        "rss": "https://news.google.com/rss/search?q=新創+募資+台灣&hl=zh-TW&gl=TW&ceid=TW:zh-Hant",  "region": "台灣", "enabled": True},
-    {"id": "gn_tw1",     "name": "台灣新創 Google News", "rss": "https://news.google.com/rss/search?q=台灣+新創+融資+完成&hl=zh-TW&gl=TW&ceid=TW:zh-Hant","region": "台灣", "enabled": True},
+    {"id": "bnext",      "name": "數位時代",            "rss": "https://www.bnext.com.tw/rss",                                                                                                    "region": "台灣", "enabled": True},
+    {"id": "meet",       "name": "Meet 創業小聚",        "rss": "https://meet.bnext.com.tw/rss",                                                                                                   "region": "台灣", "enabled": True},
+    {"id": "tc_tw",      "name": "TechCrunch TW",        "rss": "https://news.google.com/rss/search?q=新創+募資+台灣&hl=zh-TW&gl=TW&ceid=TW:zh-Hant",                                             "region": "台灣", "enabled": True},
+    {"id": "gn_tw1",     "name": "台灣新創 Google News", "rss": "https://news.google.com/rss/search?q=台灣+新創+融資+完成&hl=zh-TW&gl=TW&ceid=TW:zh-Hant",                                         "region": "台灣", "enabled": True},
+    # 新增台灣來源
+    {"id": "techorange",  "name": "科技報橘",            "rss": "https://buzzorange.com/techorange/feed/",                                                                                         "region": "台灣", "enabled": True},
+    {"id": "inside_tw",   "name": "Inside 硬塞",         "rss": "https://www.inside.com.tw/feeds",                                                                                                 "region": "台灣", "enabled": True},
+    {"id": "gn_tw_fund",  "name": "台灣融資 Google News", "rss": "https://news.google.com/rss/search?q=台灣+新創+(A輪+OR+B輪+OR+種子輪+OR+天使輪+OR+IPO)+融資&hl=zh-TW&gl=TW&ceid=TW:zh-Hant",  "region": "台灣", "enabled": True},
     # ── 中國 ──
     {"id": "36kr",       "name": "36氪",               "rss": "https://36kr.com/feed",                                                               "region": "中國", "enabled": True},
     {"id": "lieyunwang", "name": "獵雲網",              "rss": "https://www.lieyunwang.com/rss.xml",                                                  "region": "中國", "enabled": True},
