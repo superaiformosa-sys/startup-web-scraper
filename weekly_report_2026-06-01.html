@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新創情報周報 第23週</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #ffffff; color: #1a1a2e; font-family: 'Noto Sans TC', 'Microsoft JhengHei', Arial, sans-serif; font-size: 13px; }
+.page { padding: 28px 32px; background: #ffffff; }
+.region-page { page-break-before: always; padding: 28px 32px; }
+/* Header */
+.report-header { background: #1a3a6e; color: #ffffff; padding: 20px 24px; border-radius: 6px; margin-bottom: 20px; }
+.report-header h1 { font-size: 1.4rem; font-weight: 800; color: #ffffff; margin-bottom: 4px; }
+.report-header .meta { color: #a8c4f0; font-size: 0.82rem; }
+.region-header { background: #1a3a6e; color: #ffffff; padding: 14px 20px; border-radius: 6px; margin-bottom: 16px; }
+.region-header h2 { font-size: 1.1rem; font-weight: 700; color: #ffffff; }
+.region-header .sub { color: #a8c4f0; font-size: 0.8rem; margin-top: 2px; }
+/* Stat cards */
+.cards-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #dde3ee; border-radius: 6px; overflow: hidden; }
+.cards-table td { padding: 14px 0; text-align: center; border-right: 1px solid #dde3ee; background: #f0f4fc; }
+.cards-table td:last-child { border-right: none; }
+.card-num { font-size: 1.8rem; font-weight: 800; }
+.card-label { color: #5a6a8a; font-size: 0.75rem; margin-top: 2px; }
+/* Section */
+.section { margin-bottom: 20px; }
+.section-title { font-size: 0.85rem; font-weight: 700; color: #1a3a6e; margin-bottom: 10px;
+  padding-bottom: 6px; border-bottom: 2px solid #1a3a6e; text-transform: uppercase; letter-spacing: .06em; }
+/* Tables */
+table.dt { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+table.dt th { background: #eef2fb; color: #3a4a6a; padding: 7px 10px; text-align: left;
+  font-weight: 700; font-size: 0.75rem; border-bottom: 2px solid #c8d4ec; }
+table.dt td { padding: 7px 10px; border-bottom: 1px solid #eef0f6; vertical-align: top; }
+table.dt tr:last-child td { border-bottom: none; }
+table.dt tr:nth-child(even) td { background: #f8faff; }
+/* Score badges */
+.score-hi  { display: inline-block; background: #fff0dc; color: #a05000; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px; font-size: 0.82rem; border: 1px solid #f5c67a; }
+.score-mid { display: inline-block; background: #ddeeff; color: #1a4a8e; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px; font-size: 0.82rem; border: 1px solid #9bc0f0; }
+.score-lo  { display: inline-block; color: #8a9ab5; font-size: 0.82rem; }
+.score-na  { color: #b0bac8; font-size: 0.82rem; }
+/* Badges */
+.badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 0.72rem; font-weight: 700; }
+.badge-green  { background: #d4f4e2; color: #1a7a3e; }
+.badge-blue   { background: #ddeeff; color: #1a4a8e; }
+.badge-orange { background: #fdebd0; color: #a05000; }
+/* Bar */
+.bar-wrap { background: #dde3ee; border-radius: 3px; height: 6px; min-width: 60px; overflow: hidden; }
+.bar-fill  { height: 6px; border-radius: 3px; background: #2d7dd2; }
+/* Notable list */
+.notable-list { list-style: none; }
+.notable-list li { padding: 7px 0; border-bottom: 1px solid #eef0f6; }
+.notable-list li:last-child { border-bottom: none; }
+.notable-list a { color: #1a5cb5; text-decoration: underline; }
+.idx { color: #8a9ab5; font-size: 0.78rem; }
+/* Footer */
+.footer { text-align: center; color: #8a9ab5; font-size: 0.75rem; margin-top: 20px;
+  padding-top: 12px; border-top: 1px solid #dde3ee; }
+/* Hotai callout box */
+.hotai-note { background: #fff8ee; border-left: 4px solid #e07b00; padding: 8px 12px;
+  margin-bottom: 12px; font-size: 0.78rem; color: #7a4800; border-radius: 0 4px 4px 0; }
+a { color: #1a5cb5; }
+@media print { body { background: #ffffff; } .region-page { page-break-before: always; } }
+</style>
+</head>
+<body>
+<div class='page'>
+  <div class='report-header'>
+    <h1>新創情報周報</h1>
+    <div class='meta'>第 23 週 &nbsp;·&nbsp; 2026-06-01 &nbsp;·&nbsp; raw_2026-06-01</div>
+  </div>
+
+  <table class='cards-table'><tr>
+    <td><div class='card-num' style='color:#1a5cb5'>1096</div><div class='card-label'>總文章數</div></td>
+    <td><div class='card-num' style='color:#1a7a3e'>505</div><div class='card-label'>AI 已分析</div></td>
+    <td><div class='card-num' style='color:#a05000'>10</div><div class='card-label'>融資新聞</div></td>
+    <td><div class='card-num' style='color:#6a1a8e'>8</div><div class='card-label'>重點新聞</div></td>
+  </tr></table>
+
+  <div class='section'>
+    <div class='section-title'>地區分佈</div>
+    <table class='dt'><thead><tr><th>地區</th><th>文章數</th><th>佔比</th><th>趨勢</th></tr></thead>
+    <tbody><tr><td>台灣</td><td><strong>126</strong></td><td>11.5%</td><td><div class='bar-wrap'><div class='bar-fill' style='width:11%'></div></div></td></tr><tr><td>東南亞</td><td><strong>340</strong></td><td>31.0%</td><td><div class='bar-wrap'><div class='bar-fill' style='width:31%'></div></div></td></tr><tr><td>中國</td><td><strong>273</strong></td><td>24.9%</td><td><div class='bar-wrap'><div class='bar-fill' style='width:25%'></div></div></td></tr><tr><td>全球</td><td><strong>357</strong></td><td>32.6%</td><td><div class='bar-wrap'><div class='bar-fill' style='width:33%'></div></div></td></tr></tbody></table>
+  </div>
+
+  <div class='section'>
+    <div class='section-title'>產業熱度 Top 10</div>
+    <table class='dt'><thead><tr><th>產業</th><th>熱度</th><th>數量</th></tr></thead>
+    <tbody><tr><td>AI</td><td><div class='bar-wrap'><div class='bar-fill' style='width:100%'></div></div></td><td><strong>515</strong></td></tr><tr><td>其他</td><td><div class='bar-wrap'><div class='bar-fill' style='width:86%'></div></div></td><td><strong>441</strong></td></tr><tr><td>Mobility</td><td><div class='bar-wrap'><div class='bar-fill' style='width:34%'></div></div></td><td><strong>173</strong></td></tr><tr><td>機器人</td><td><div class='bar-wrap'><div class='bar-fill' style='width:11%'></div></div></td><td><strong>59</strong></td></tr><tr><td>SaaS</td><td><div class='bar-wrap'><div class='bar-fill' style='width:11%'></div></div></td><td><strong>56</strong></td></tr><tr><td>半導體</td><td><div class='bar-wrap'><div class='bar-fill' style='width:10%'></div></div></td><td><strong>53</strong></td></tr><tr><td>FinTech</td><td><div class='bar-wrap'><div class='bar-fill' style='width:5%'></div></div></td><td><strong>28</strong></td></tr><tr><td>物流</td><td><div class='bar-wrap'><div class='bar-fill' style='width:5%'></div></div></td><td><strong>26</strong></td></tr><tr><td>GreenTech</td><td><div class='bar-wrap'><div class='bar-fill' style='width:4%'></div></div></td><td><strong>23</strong></td></tr><tr><td>生技</td><td><div class='bar-wrap'><div class='bar-fill' style='width:3%'></div></div></td><td><strong>13</strong></td></tr></tbody></table>
+  </div>
+
+  
+<div class='section'>
+  <div class='section-title'>和泰集團適配度排行 Top 10</div>
+  <div class='hotai-note'>
+    <strong>集團適配度</strong>：40% Qwen語意 + 40% 業務關鍵字 + 20% 地區/輪次規則 &nbsp;｜&nbsp;
+    <strong>新創推薦度</strong>：40% Qwen新聞可信度 + 25% 融資金額 + 20% 輪次成熟度 + 15% 投資人/描述品質
+  </div>
+  <table class='dt'><thead><tr>
+    <th>#</th><th>公司</th><th>產業</th><th>輪次</th>
+    <th>集團適配度</th><th>新創推薦度</th><th>關鍵字</th><th>地區</th><th>業務標籤</th>
+  </tr></thead><tbody><tr><td class='idx'>1</td><td><a href='https://technode.com/2026/05/21/alibaba-introduces-qwen3-7-max-as-next-gen-ai-agent-model/' target='_blank'>阿里雲</a><br><small style='color:#7a8aaa'>AliCloud</small></td><td><span class='badge badge-blue'>AI</span></td><td><span class='badge badge-orange'>—</span></td><td><span class='score-mid'>4.6</span></td><td><span class='score-mid'>5.1</span></td><td style='color:#7a8aaa'>0.5</td><td>東南亞</td><td><small style='color:#7a8aaa'>AI_DataPlatform</small></td></tr><tr><td class='idx'>2</td><td><a href='https://techorange.com/2026/05/25/humanoid-robots-america-china-adaptability-deployment-ambrose-nasa/?utm_source=rss&amp;utm_medium=feed&amp;utm_campaign=techorange_rss' target='_blank'>未來式智能</a><br><small style='color:#7a8aaa'>MindOS</small></td><td><span class='badge badge-blue'>AI, SaaS</span></td><td><span class='badge badge-orange'>Pre-A</span></td><td><span class='score-lo'>3.7</span></td><td><span class='score-mid'>5.1</span></td><td style='color:#7a8aaa'>1.2</td><td>台灣</td><td><small style='color:#7a8aaa'>AI_DataPlatform</small></td></tr><tr><td class='idx'>3</td><td><a href='https://sifted.eu/articles/anthropic-wont-kill-vertcial-ai/' target='_blank'>Lexroom</a><br><small style='color:#7a8aaa'>Lexroom</small></td><td><span class='badge badge-blue'>AI, 其他</span></td><td><span class='badge badge-orange'>種子輪</span></td><td><span class='score-lo'>3.6</span></td><td><span class='score-mid'>5.6</span></td><td style='color:#7a8aaa'>3.3</td><td>全球</td><td><small style='color:#7a8aaa'>EV_Charging, AI_DataPlatform</small></td></tr><tr><td class='idx'>4</td><td><a href='https://techcrunch.com/2026/05/26/openrouter-more-than-doubles-valuation-to-1-3b-in-a-year/' target='_blank'>OpenRouter</a><br><small style='color:#7a8aaa'>OpenRouter</small></td><td><span class='badge badge-blue'>AI, 其他</span></td><td><span class='badge badge-orange'>B輪</span></td><td><span class='score-lo'>3.4</span></td><td><span class='score-hi'>7.9</span></td><td style='color:#7a8aaa'>2.5</td><td>全球</td><td><small style='color:#7a8aaa'>EV_Charging, AI_DataPlatform</small></td></tr><tr><td class='idx'>5</td><td><a href='https://news.google.com/rss/articles/CBMiWEFVX3lxTE42Ql9yNFpRN0VpTThlQjh6VHJWNFhCZGgwTlZ1NGxXX1dfd1V6Z01aVGJ1ZnZCSXFUUmU3dlVqaFpEd01qTTZVMVdQX29TMl94TWRnTDE2Q1Y?oc=5' target='_blank'>InsForge</a><br><small style='color:#7a8aaa'>InsForge</small></td><td><span class='badge badge-blue'>AI, 其他</span></td><td><span class='badge badge-orange'>—</span></td><td><span class='score-lo'>3.4</span></td><td><span class='score-mid'>4.2</span></td><td style='color:#7a8aaa'>2.5</td><td>台灣</td><td><small style='color:#7a8aaa'>EV_Charging, AI_DataPlatform</small></td></tr><tr><td class='idx'>6</td><td><a href='https://meet.bnext.com.tw/articles/view/53254' target='_blank'>USPACE</a><br><small style='color:#7a8aaa'>USPACE</small></td><td><span class='badge badge-blue'>AI, SaaS</span></td><td><span class='badge badge-orange'>—</span></td><td><span class='score-lo'>3.3</span></td><td><span class='score-lo'>3.3</span></td><td style='color:#7a8aaa'>1.2</td><td>台灣</td><td><small style='color:#7a8aaa'>AI_DataPlatform</small></td></tr><tr><td class='idx'>7</td><td><a href='https://techcrunch.com/2026/05/21/maka-kids-is-redefining-kids-screen-time-with-a-streaming-app-optimized-for-well-being-not-engagement/' target='_blank'>Maka Kids</a><br><small style='color:#7a8aaa'>Maka Kids</small></td><td><span class='badge badge-blue'>EdTech</span></td><td><span class='badge badge-orange'>種子輪</span></td><td><span class='score-lo'>3.2</span></td><td><span class='score-mid'>5.0</span></td><td style='color:#7a8aaa'>2.5</td><td>全球</td><td><small style='color:#7a8aaa'>EV_Charging, AI_DataPlatform</small></td></tr><tr><td class='idx'>8</td><td><a href='https://sifted.eu/articles/smart-ring-maker-oura-files-for-ipo-in-new-york/' target='_blank'>Oura</a><br><small style='color:#7a8aaa'>Oura</small></td><td><span class='badge badge-blue'>其他, 醫療</span></td><td><span class='badge badge-orange'>IPO</span></td><td><span class='score-lo'>3.1</span></td><td><span class='score-mid'>5.1</span></td><td style='color:#7a8aaa'>2.0</td><td>全球</td><td><small style='color:#7a8aaa'></small></td></tr><tr><td class='idx'>9</td><td><a href='https://techcrunch.com/2026/05/26/amazon-fulfillment-competitor-stord-raises-250m-at-3b-valuation/' target='_blank'>Stord</a><br><small style='color:#7a8aaa'>Stord</small></td><td><span class='badge badge-blue'>電商, 物流</span></td><td><span class='badge badge-orange'>C輪</span></td><td><span class='score-lo'>3.0</span></td><td><span class='score-hi'>7.5</span></td><td style='color:#7a8aaa'>2.5</td><td>全球</td><td><small style='color:#7a8aaa'>AI_DataPlatform</small></td></tr><tr><td class='idx'>10</td><td><a href='https://technode.com/2026/05/27/at-beyond-expo-2026-xreal-ceo-predicts-an-iphone-moment-for-ai-glasses/' target='_blank'>XREAL</a><br><small style='color:#7a8aaa'>XREAL</small></td><td><span class='badge badge-blue'>其他, AI</span></td><td><span class='badge badge-orange'>—</span></td><td><span class='score-lo'>2.9</span></td><td><span class='score-lo'>3.6</span></td><td style='color:#7a8aaa'>1.2</td><td>東南亞</td><td><small style='color:#7a8aaa'>AI_DataPlatform</small></td></tr></tbody></table>
+</div>
+
+  <div class='section'>
+    <div class='section-title'>來源活躍度</div>
+    <table class='dt'><thead><tr><th>媒體</th><th>趨勢</th><th>數量</th></tr></thead>
+    <tbody><tr><td>36氪</td><td><div class='bar-wrap'><div class='bar-fill' style='width:100%'></div></div></td><td><strong>248</strong></td></tr><tr><td>Nikkei Asia</td><td><div class='bar-wrap'><div class='bar-fill' style='width:90%'></div></div></td><td><strong>222</strong></td></tr><tr><td>Sifted (Europe)</td><td><div class='bar-wrap'><div class='bar-fill' style='width:58%'></div></div></td><td><strong>144</strong></td></tr><tr><td>TechCrunch Startups</td><td><div class='bar-wrap'><div class='bar-fill' style='width:53%'></div></div></td><td><strong>132</strong></td></tr><tr><td>科技報橘</td><td><div class='bar-wrap'><div class='bar-fill' style='width:39%'></div></div></td><td><strong>97</strong></td></tr><tr><td>Technode</td><td><div class='bar-wrap'><div class='bar-fill' style='width:38%'></div></div></td><td><strong>93</strong></td></tr><tr><td>全球新創 Google News</td><td><div class='bar-wrap'><div class='bar-fill' style='width:16%'></div></div></td><td><strong>40</strong></td></tr><tr><td>VentureBeat</td><td><div class='bar-wrap'><div class='bar-fill' style='width:9%'></div></div></td><td><strong>23</strong></td></tr><tr><td>中國科技 Google News</td><td><div class='bar-wrap'><div class='bar-fill' style='width:8%'></div></div></td><td><strong>21</strong></td></tr><tr><td>TechCrunch TW</td><td><div class='bar-wrap'><div class='bar-fill' style='width:7%'></div></div></td><td><strong>17</strong></td></tr></tbody></table>
+  </div>
+
+  <div class='footer'>報告產生時間: 2026-06-01 07:24:29 &nbsp;·&nbsp; Powered by Qwen 2.5 + Claude</div>
+</div>
+<div class='region-page'>
+  <div class='region-header'>
+    <h2>台灣 新創投資情報</h2>
+    <div class='sub'>
+      顯示 4 家（集團適配度 ≥ 1.8，融資新聞優先）
+      
+    </div>
+  </div>
+  <div class='hotai-note'>集團適配度：40% Qwen語意 + 40% 業務關鍵字 + 20% 地區/輪次規則</div>
+  <table class='dt'>
+    <thead><tr>
+      <th>#</th>
+      <th>新聞標題</th>
+      <th>相關公司名稱 / 產業 / 輪次</th>
+      <th>AI 生成摘要</th>
+      <th>評分日期</th>
+      <th style='text-align:center'>集團適配度</th>
+      <th style='text-align:center'>新創推薦度</th>
+      <th style='text-align:center'>關鍵字</th>
+    </tr></thead>
+    <tbody><tr><td class='idx'>1</td><td><a href='https://techorange.com/2026/05/25/humanoid-robots-america-china-adaptability-deployment-ambrose-nasa/?utm_source=rss&amp;utm_medium=feed&amp;utm_campaign=techorange_rss' target='_blank' style='color:#1a5cb5;font-weight:600'>美國人形機器人為何無法規模化上工？前 NASA 機器人部門負責人：只做單一任務，很難創造 ROI</a></td><td><span class='badge badge-blue'>AI, SaaS</span><br><strong>未來式智能</strong><br><small style='color:#7a8aaa'>MindOS</small><br><span class='badge badge-orange'>Pre-A</span> <span class='badge badge-green'>數百萬美元</span></td><td style='color:#4a5a7a;font-size:.81rem'>AI-powered digital employee platform for enterprise automation.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>3.7</span></td><td style='text-align:center'><span class='score-mid'>5.1</span></td><td style='text-align:center;color:#8a9ab5'>1.2</td></tr><tr><td class='idx'>2</td><td><a href='https://news.google.com/rss/articles/CBMiWEFVX3lxTE42Ql9yNFpRN0VpTThlQjh6VHJWNFhCZGgwTlZ1NGxXX1dfd1V6Z01aVGJ1ZnZCSXFUUmU3dlVqaFpEd01qTTZVMVdQX29TMl94TWRnTDE2Q1Y?oc=5' target='_blank' style='color:#1a5cb5;font-weight:600'>AI 寫完程式之後呢？YC 新創 InsForge 與台灣 Zeabur，搶攻 AI 原生基礎設施新戰場 - 鏈新聞 ABMedia</a></td><td><span class='badge badge-blue'>AI, 其他</span><br><strong>InsForge</strong> <span class='badge badge-green'>未披露</span></td><td style='color:#4a5a7a;font-size:.81rem'>AI-native infrastructure platform for software development and deployment</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>3.4</span></td><td style='text-align:center'><span class='score-mid'>4.2</span></td><td style='text-align:center;color:#8a9ab5'>2.5</td></tr><tr><td class='idx'>3</td><td><a href='https://meet.bnext.com.tw/articles/view/53254' target='_blank' style='color:#1a5cb5;font-weight:600'>一個人改造客服、財會、排班，USPACE AI長曾明賢：AI轉型要成功，你給的幫助不能超過50%</a></td><td><span class='badge badge-blue'>AI, SaaS</span><br><strong>USPACE</strong></td><td style='color:#4a5a7a;font-size:.81rem'>AI-powered platform for customer service, finance, and scheduling optimization.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>3.3</span></td><td style='text-align:center'><span class='score-lo'>3.3</span></td><td style='text-align:center;color:#8a9ab5'>1.2</td></tr><tr><td class='idx'>4</td><td><a href='https://techorange.com/2026/05/25/chinas-deepseek-price-flagship-ai-model-75-shift/?utm_source=rss&amp;utm_medium=feed&amp;utm_campaign=techorange_rss' target='_blank' style='color:#1a5cb5;font-weight:600'>DeepSeek 大砍價 75％！華為晶片助攻，中國 AI 成本戰衝擊西方模型</a></td><td><span class='badge badge-blue'>AI</span><br><strong>DeepSeek</strong></td><td style='color:#4a5a7a;font-size:.81rem'>AI model provider with a flagship model DeepSeek V4 Pro, offering permanent 75% discount on its services.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>2.1</span></td><td style='text-align:center'><span class='score-mid'>4.0</span></td><td style='text-align:center;color:#8a9ab5'>1.2</td></tr></tbody>
+  </table>
+</div>
+<div class='region-page'><div class='region-header'><h2>東南亞 新創投資情報</h2><div class='sub'>本週尚無已評分文章（請先執行 python main.py 完整流程）</div></div></div>
+<div class='region-page'>
+  <div class='region-header'>
+    <h2>中國 新創投資情報</h2>
+    <div class='sub'>
+      顯示 8 家（集團適配度 ≥ 1.8，融資新聞優先）
+      
+    </div>
+  </div>
+  <div class='hotai-note'>集團適配度：40% Qwen語意 + 40% 業務關鍵字 + 20% 地區/輪次規則</div>
+  <table class='dt'>
+    <thead><tr>
+      <th>#</th>
+      <th>新聞標題</th>
+      <th>相關公司名稱 / 產業 / 輪次</th>
+      <th>AI 生成摘要</th>
+      <th>評分日期</th>
+      <th style='text-align:center'>集團適配度</th>
+      <th style='text-align:center'>新創推薦度</th>
+      <th style='text-align:center'>關鍵字</th>
+    </tr></thead>
+    <tbody><tr><td class='idx'>1</td><td><a href='https://36kr.com/p/3826922264286083?f=rss' target='_blank' style='color:#1a5cb5;font-weight:600'>经过华为、传音、拓竹历练，95后打造AI母婴界特斯拉｜36氪首发</a></td><td><span class='badge badge-blue'>AI, 其他</span><br><strong>珂迪Coddie</strong><br><small style='color:#7a8aaa'>Coddie</small><br><span class='badge badge-orange'>天使輪</span> <span class='badge badge-green'>数千万元</span></td><td style='color:#4a5a7a;font-size:.81rem'>AI母婴智能硬件品牌</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>2.1</span></td><td style='text-align:center'><span class='score-mid'>4.6</span></td><td style='text-align:center;color:#8a9ab5'>1.2</td></tr><tr><td class='idx'>2</td><td><a href='https://36kr.com/p/3825817310368385?f=rss' target='_blank' style='color:#1a5cb5;font-weight:600'>36氪首发｜男士美妆品牌「GREENLAB绿所」获宝顶创投战略投资，张耀东出任公司董事</a></td><td><span class='badge badge-blue'>其他</span><br><strong>GREENLAB绿所</strong><br><small style='color:#7a8aaa'>GREENLAB GreenLab</small><br><span class='badge badge-orange'>Pre-A</span> <span class='badge badge-green'>千万级人民币</span></td><td style='color:#4a5a7a;font-size:.81rem'>男士美妆品牌，专注于无感化面部理容产品。</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>1.8</span></td><td style='text-align:center'><span class='score-mid'>4.8</span></td><td style='text-align:center;color:#8a9ab5'>0.0</td></tr><tr><td class='idx'>3</td><td><a href='https://36kr.com/newsflashes/3826970543395460?f=rss' target='_blank' style='color:#1a5cb5;font-weight:600'>MiniMax申请注册Mavis商标</a></td><td><span class='badge badge-blue'>AI, Mobility</span><br><strong>上海稀宇极智科技有限公司</strong><br><small style='color:#7a8aaa'>Shanghai Xiyu Jiuzhi Technology Co., Ltd.</small></td><td style='color:#4a5a7a;font-size:.81rem'>AI foundational software and application development company with a focus on website services and scientific instruments.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>2.8</span></td><td style='text-align:center'><span class='score-lo'>3.2</span></td><td style='text-align:center;color:#8a9ab5'>2.5</td></tr><tr><td class='idx'>4</td><td><a href='https://36kr.com/newsflashes/3825762357941123?f=rss' target='_blank' style='color:#8a9ab5;font-style:italic'>云海升腾科技（深圳）有限公司 ⟨待更新⟩</a></td><td><span class='badge badge-blue'>SaaS, 其他</span><br><strong>云海升腾科技（深圳）有限公司</strong><br><small style='color:#7a8aaa'>CloudSea Ascending Technology (Shenzhen) Co., Ltd.</small></td><td style='color:#4a5a7a;font-size:.81rem'>Software development, network technology service, internet data service provider</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-26</td><td style='text-align:center'><span class='score-lo'>2.6</span></td><td style='text-align:center'><span class='score-mid'>4.1</span></td><td style='text-align:center;color:#8a9ab5'>1.5</td></tr><tr><td class='idx'>5</td><td><a href='https://36kr.com/newsflashes/3825783737455236?f=rss' target='_blank' style='color:#8a9ab5;font-style:italic'>千曙科技 ⟨待更新⟩</a></td><td><span class='badge badge-blue'>Mobility</span><br><strong>千曙科技</strong><br><small style='color:#7a8aaa'>Qianshu Technology</small></td><td style='color:#4a5a7a;font-size:.81rem'>L4级自动驾驶技术开发与应用</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-26</td><td style='text-align:center'><span class='score-lo'>2.2</span></td><td style='text-align:center'><span class='score-lo'>3.8</span></td><td style='text-align:center;color:#8a9ab5'>0.0</td></tr><tr><td class='idx'>6</td><td><a href='https://36kr.com/newsflashes/3834069899192192?f=rss' target='_blank' style='color:#1a5cb5;font-weight:600'>宁德时代等入股赛力斯旗下赛豆科技公司</a></td><td><span class='badge badge-blue'>其他</span><br><strong>賽豆科技</strong><br><small style='color:#7a8aaa'>Saidee Technology</small></td><td style='color:#4a5a7a;font-size:.81rem'>寧德時代等入股的汽車科技公司，專注於新能源車相關技術。</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-06-01</td><td style='text-align:center'><span class='score-lo'>1.9</span></td><td style='text-align:center'><span class='score-lo'>3.5</span></td><td style='text-align:center;color:#8a9ab5'>1.2</td></tr><tr><td class='idx'>7</td><td><a href='https://36kr.com/newsflashes/3826958517113731?f=rss' target='_blank' style='color:#1a5cb5;font-weight:600'>NBBOSS发布AI决策机器人，瞄准企业决策场景</a></td><td><span class='badge badge-blue'>AI, SaaS</span><br><strong>NBBOSS</strong></td><td style='color:#4a5a7a;font-size:.81rem'>AI decision-making robot for enterprise management scenarios.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>1.9</span></td><td style='text-align:center'><span class='score-lo'>3.3</span></td><td style='text-align:center;color:#8a9ab5'>1.2</td></tr><tr><td class='idx'>8</td><td><a href='https://36kr.com/newsflashes/3825581459395203?f=rss' target='_blank' style='color:#8a9ab5;font-style:italic'>阿里云 ⟨待更新⟩</a></td><td><span class='badge badge-blue'>AI, SaaS</span><br><strong>阿里云</strong><br><small style='color:#7a8aaa'>AliCloud</small></td><td style='color:#4a5a7a;font-size:.81rem'>发布全新海外AI产品官网Qwen Cloud及一系列相关产品和平台更新</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-26</td><td style='text-align:center'><span class='score-lo'>1.9</span></td><td style='text-align:center'><span class='score-mid'>4.4</span></td><td style='text-align:center;color:#8a9ab5'>0.5</td></tr></tbody>
+  </table>
+</div>
+<div class='region-page'>
+  <div class='region-header'>
+    <h2>全球 新創投資情報</h2>
+    <div class='sub'>
+      顯示 13 家（集團適配度 ≥ 1.8，融資新聞優先）
+      &nbsp;·&nbsp; 已過濾 2 筆低相關
+    </div>
+  </div>
+  <div class='hotai-note'>集團適配度：40% Qwen語意 + 40% 業務關鍵字 + 20% 地區/輪次規則</div>
+  <table class='dt'>
+    <thead><tr>
+      <th>#</th>
+      <th>新聞標題</th>
+      <th>相關公司名稱 / 產業 / 輪次</th>
+      <th>AI 生成摘要</th>
+      <th>評分日期</th>
+      <th style='text-align:center'>集團適配度</th>
+      <th style='text-align:center'>新創推薦度</th>
+      <th style='text-align:center'>關鍵字</th>
+    </tr></thead>
+    <tbody><tr><td class='idx'>1</td><td><a href='https://sifted.eu/articles/anthropic-wont-kill-vertcial-ai/' target='_blank' style='color:#8a9ab5;font-style:italic'>Lexroom ⟨待更新⟩</a></td><td><span class='badge badge-blue'>AI, 其他</span><br><strong>Lexroom</strong><br><span class='badge badge-orange'>種子輪</span> <span class='badge badge-green'>3M USD</span></td><td style='color:#4a5a7a;font-size:.81rem'>AI-driven legal research and document analysis platform for law firms.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-26</td><td style='text-align:center'><span class='score-lo'>3.6</span></td><td style='text-align:center'><span class='score-mid'>5.6</span></td><td style='text-align:center;color:#8a9ab5'>3.3</td></tr><tr><td class='idx'>2</td><td><a href='https://techcrunch.com/2026/05/26/openrouter-more-than-doubles-valuation-to-1-3b-in-a-year/' target='_blank' style='color:#1a5cb5;font-weight:600'>OpenRouter more than doubles valuation to $1.3B in a year</a></td><td><span class='badge badge-blue'>AI, 其他</span><br><strong>OpenRouter</strong><br><span class='badge badge-orange'>B輪</span> <span class='badge badge-green'>$113 million</span></td><td style='color:#4a5a7a;font-size:.81rem'>AI-driven API router for developers to integrate multiple AI models.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>3.4</span></td><td style='text-align:center'><span class='score-hi'>7.9</span></td><td style='text-align:center;color:#8a9ab5'>2.5</td></tr><tr><td class='idx'>3</td><td><a href='https://techcrunch.com/2026/05/21/maka-kids-is-redefining-kids-screen-time-with-a-streaming-app-optimized-for-well-being-not-engagement/' target='_blank' style='color:#1a5cb5;font-weight:600'>Maka Kids is redefining kids’ screen time with a streaming app optimized for well-being, not engagement</a></td><td><span class='badge badge-blue'>EdTech</span><br><strong>Maka Kids</strong><br><span class='badge badge-orange'>種子輪</span> <span class='badge badge-green'>$3 million</span></td><td style='color:#4a5a7a;font-size:.81rem'>Streaming app optimized for well-being, offering content designed for healthy development for children ages zero to six.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>3.2</span></td><td style='text-align:center'><span class='score-mid'>5.0</span></td><td style='text-align:center;color:#8a9ab5'>2.5</td></tr><tr><td class='idx'>4</td><td><a href='https://sifted.eu/articles/smart-ring-maker-oura-files-for-ipo-in-new-york/' target='_blank' style='color:#8a9ab5;font-style:italic'>Oura ⟨待更新⟩</a></td><td><span class='badge badge-blue'>其他, 醫療</span><br><strong>Oura</strong><br><span class='badge badge-orange'>IPO</span></td><td style='color:#4a5a7a;font-size:.81rem'>Wearable technology company focusing on health and wellness tracking through smart rings.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-26</td><td style='text-align:center'><span class='score-lo'>3.1</span></td><td style='text-align:center'><span class='score-mid'>5.1</span></td><td style='text-align:center;color:#8a9ab5'>2.0</td></tr><tr><td class='idx'>5</td><td><a href='https://techcrunch.com/2026/05/26/amazon-fulfillment-competitor-stord-raises-250m-at-3b-valuation/' target='_blank' style='color:#1a5cb5;font-weight:600'>Amazon fulfillment competitor Stord raises $250M at $3B valuation</a></td><td><span class='badge badge-blue'>電商, 物流</span><br><strong>Stord</strong><br><span class='badge badge-orange'>C輪</span> <span class='badge badge-green'>$250M</span></td><td style='color:#4a5a7a;font-size:.81rem'>Network of physical warehouses and inventory management software for e-commerce.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>3.0</span></td><td style='text-align:center'><span class='score-hi'>7.5</span></td><td style='text-align:center;color:#8a9ab5'>2.5</td></tr><tr><td class='idx'>6</td><td><a href='https://techcrunch.com/2026/05/23/solarsquare-in-talks-to-raise-up-to-60m-as-indias-rooftop-solar-market-draws-major-vc-interest/' target='_blank' style='color:#1a5cb5;font-weight:600'>SolarSquare in talks to raise up to $60M as India’s rooftop solar market draws major VC interest</a></td><td><span class='badge badge-blue'>GreenTech, SaaS</span><br><strong>SolarSquare</strong><br><span class='badge badge-orange'>A輪</span> <span class='badge badge-green'>$60M</span></td><td style='color:#4a5a7a;font-size:.81rem'>Rooftop solar solutions provider for residential and commercial properties.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>2.9</span></td><td style='text-align:center'><span class='score-mid'>6.3</span></td><td style='text-align:center;color:#8a9ab5'>1.2</td></tr><tr><td class='idx'>7</td><td><a href='https://sifted.eu/articles/fixing-the-baas-bottleneck-brnd/' target='_blank' style='color:#1a5cb5;font-weight:600'>Fixing the BaaS bottleneck: How Papaya is redesigning fintech infrastructure</a></td><td><span class='badge badge-blue'>FinTech</span><br><strong>Papaya</strong><br><span class='badge badge-orange'>A輪</span> <span class='badge badge-green'>$10M</span></td><td style='color:#4a5a7a;font-size:.81rem'>Fintech infrastructure provider focusing on Business as a Service (BaaS) solutions for financial institutions.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-06-01</td><td style='text-align:center'><span class='score-lo'>2.6</span></td><td style='text-align:center'><span class='score-mid'>6.6</span></td><td style='text-align:center;color:#8a9ab5'>2.5</td></tr><tr><td class='idx'>8</td><td><a href='https://techcrunch.com/2026/05/23/peec-one-of-berlins-rising-startups-more-than-doubled-annualized-revenue-in-months-to-10m-sources-say/' target='_blank' style='color:#1a5cb5;font-weight:600'>Peec, one of Berlin’s rising startups, more than doubled annualized revenue in months to $10M, sources say</a></td><td><span class='badge badge-blue'>AI, SaaS</span><br><strong>Peec</strong><br><span class='badge badge-orange'>Pre-A</span> <span class='badge badge-green'>$10M</span></td><td style='color:#4a5a7a;font-size:.81rem'>Helps brands track their presence in AI searches.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>2.6</span></td><td style='text-align:center'><span class='score-mid'>5.6</span></td><td style='text-align:center;color:#8a9ab5'>2.5</td></tr><tr><td class='idx'>9</td><td><a href='https://sifted.eu/articles/invisix-seed-round-20m/' target='_blank' style='color:#1a5cb5;font-weight:600'>Exclusive: ASML spinout Invisix raises €20m seed round</a></td><td><span class='badge badge-blue'>其他</span><br><strong>Invisix</strong><br><span class='badge badge-orange'>種子輪</span> <span class='badge badge-green'>€20m</span></td><td style='color:#4a5a7a;font-size:.81rem'>Spinout from ASML, developing advanced inspection technologies for semiconductor manufacturing.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-06-01</td><td style='text-align:center'><span class='score-lo'>2.4</span></td><td style='text-align:center'><span class='score-mid'>6.0</span></td><td style='text-align:center;color:#8a9ab5'>2.5</td></tr><tr><td class='idx'>10</td><td><a href='https://techcrunch.com/2026/05/20/imperagen-raises-5-million-to-redefine-enzyme-engineering/' target='_blank' style='color:#1a5cb5;font-weight:600'>Imperagen raises £5 million to use quantum physics, AI on enzyme engineering</a></td><td><span class='badge badge-blue'>生技, 其他</span><br><strong>Imperagen</strong><br><span class='badge badge-orange'>種子輪</span> <span class='badge badge-green'>£5 million</span></td><td style='color:#4a5a7a;font-size:.81rem'>Biotech company leveraging quantum physics and AI for enzyme engineering.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>2.4</span></td><td style='text-align:center'><span class='score-mid'>5.6</span></td><td style='text-align:center;color:#8a9ab5'>2.5</td></tr><tr><td class='idx'>11</td><td><a href='https://techcrunch.com/2026/05/21/booking-platform-fresha-announces-80m-investment-unicorn-valuation/' target='_blank' style='color:#8a9ab5;font-style:italic'>Fresha ⟨待更新⟩</a></td><td><span class='badge badge-blue'>其他</span><br><strong>Fresha</strong> <span class='badge badge-green'>$80 million</span></td><td style='color:#4a5a7a;font-size:.81rem'>Beauty and wellness booking marketplace</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-26</td><td style='text-align:center'><span class='score-lo'>2.1</span></td><td style='text-align:center'><span class='score-mid'>4.1</span></td><td style='text-align:center;color:#8a9ab5'>2.5</td></tr><tr><td class='idx'>12</td><td><a href='https://sifted.eu/articles/kkr-backs-uks-newest-unicorn-in-80m-round/' target='_blank' style='color:#8a9ab5;font-style:italic'>UK’s newest unicorn ⟨待更新⟩</a></td><td><span class='badge badge-blue'>其他</span><br><strong>UK’s newest unicorn</strong> <span class='badge badge-green'>$80m</span></td><td style='color:#4a5a7a;font-size:.81rem'>KKR backed the UK&#x27;s newest unicorn in an $80m funding round</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-26</td><td style='text-align:center'><span class='score-lo'>2.1</span></td><td style='text-align:center'><span class='score-mid'>4.1</span></td><td style='text-align:center;color:#8a9ab5'>2.5</td></tr><tr><td class='idx'>13</td><td><a href='https://techcrunch.com/2026/05/20/clouted-wants-to-take-the-guesswork-out-of-making-short-videos-go-viral/' target='_blank' style='color:#1a5cb5;font-weight:600'>Clouted wants to take the guesswork out of making short videos go viral</a></td><td><span class='badge badge-blue'>SaaS, 其他</span><br><strong>Clouted</strong><br><span class='badge badge-orange'>種子輪</span> <span class='badge badge-green'>$7 million</span></td><td style='color:#4a5a7a;font-size:.81rem'>Video clipping platform for creating viral short videos.</td><td style='color:#8a9ab5;white-space:nowrap;font-size:.78rem'>2026-05-27</td><td style='text-align:center'><span class='score-lo'>1.9</span></td><td style='text-align:center'><span class='score-mid'>5.9</span></td><td style='text-align:center;color:#8a9ab5'>1.2</td></tr></tbody>
+  </table>
+</div>
+<div class='page' style='margin-top:20px'>
+  <div class='region-header'>
+    <h2>📊 評分基準說明</h2>
+    <div class='sub'>三個維度的定義與計算方式</div>
+  </div>
+
+  <div class='section'>
+    <div class='section-title'>評分維度定義</div>
+    <table class='dt'>
+      <thead><tr>
+        <th style='width:15%'>評分欄位</th>
+        <th style='width:30%'>定義</th>
+        <th style='width:30%'>計算方式</th>
+        <th style='width:25%'>分數區間說明</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>集團適配度</strong><br><small style='color:#7a8aaa'>groupFitScore</small></td>
+          <td>與和泰集團 13 大業務版圖的策略契合程度</td>
+          <td>
+            <span class='badge badge-orange'>40%</span> Qwen 大模型語意評分（hotaiFitScore）<br>
+            <span class='badge badge-blue'>40%</span> 業務關鍵字 ML 覆蓋率（mlScore）<br>
+            <span class='badge badge-green'>20%</span> 地區 / 輪次商業規則加分
+          </td>
+          <td>
+            <span class='score-hi'>7–10</span> 高度契合，建議優先關注<br>
+            <span class='score-mid'>4–6.9</span> 中度相關，可觀察<br>
+            <span class='score-lo'>0–3.9</span> 低相關
+          </td>
+        </tr>
+        <tr>
+          <td><strong>新創推薦度</strong><br><small style='color:#7a8aaa'>startupScore</small></td>
+          <td>新創公司本身的投資價值與新聞可信度</td>
+          <td>
+            <span class='badge badge-orange'>40%</span> Qwen 新聞完整性（relevanceScore）<br>
+            <span class='badge badge-blue'>25%</span> 融資金額規模<br>
+            <span class='badge badge-green'>20%</span> 輪次成熟度<br>
+            <span class='badge badge-orange'>15%</span> 投資人資訊品質
+          </td>
+          <td>
+            <span class='score-hi'>7–10</span> 具體融資輪次 + 金額 + 知名投資人<br>
+            <span class='score-mid'>4–6.9</span> 部分資訊確認<br>
+            <span class='score-lo'>0–3.9</span> 資訊不完整
+          </td>
+        </tr>
+        <tr>
+          <td><strong>關鍵字分數</strong><br><small style='color:#7a8aaa'>mlScore</small></td>
+          <td>純機器學習關鍵字命中率，不依賴 AI 判斷</td>
+          <td>
+            掃描 12 大業務版圖的 FIT_KEYWORDS 關鍵字<br>
+            每個類別命中 → 加分，上限 10 分<br>
+            <em>公式：min(命中類別數 × 命中密度 / 4 × 10, 10)</em>
+          </td>
+          <td>
+            可用來驗證 Qwen 評分是否合理<br>
+            若 mlScore 高但 groupFitScore 低 → 可能有誤判
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class='section'>
+    <div class='section-title'>12 大業務版圖關鍵字清單（FIT_KEYWORDS）</div>
+    <p style='font-size:.8rem;color:#7a8aaa;margin-bottom:8px'>
+      以下關鍵字用於計算 <strong>關鍵字分數（mlScore）</strong>，
+      也作為 <strong>集團適配度（groupFitScore）</strong> 的 40% ML 分數依據。
+    </p>
+    <table class='dt'>
+      <thead><tr><th>業務版圖</th><th>關鍵字（每類取前 6 個顯示）</th></tr></thead>
+      <tbody><tr><td style='white-space:nowrap;font-weight:600;color:#1a3a6e'>① 汽車代理經銷（Toyota/Lexus）</td><td style='color:#4a5a7a;font-size:.8rem'>汽車經銷 &nbsp;·&nbsp; 車輛銷售 &nbsp;·&nbsp; 車款 &nbsp;·&nbsp; dealer &nbsp;·&nbsp; dealership &nbsp;·&nbsp; DMS &nbsp;·&nbsp; <em>+13 更多</em></td></tr><tr><td style='white-space:nowrap;font-weight:600;color:#1a3a6e'>② ③ 商用車（HINO 卡車/巴士）</td><td style='color:#4a5a7a;font-size:.8rem'>商用車 &nbsp;·&nbsp; 卡車 &nbsp;·&nbsp; 貨車 &nbsp;·&nbsp; 巴士 &nbsp;·&nbsp; 公車 &nbsp;·&nbsp; truck &nbsp;·&nbsp; <em>+7 更多</em></td></tr><tr><td style='white-space:nowrap;font-weight:600;color:#1a3a6e'>④ 充電/能源（EVRun/氫能）</td><td style='color:#4a5a7a;font-size:.8rem'>電動車 &nbsp;·&nbsp; EV &nbsp;·&nbsp; 充電樁 &nbsp;·&nbsp; 充電站 &nbsp;·&nbsp; 充電網路 &nbsp;·&nbsp; 氫能 &nbsp;·&nbsp; <em>+16 更多</em></td></tr><tr><td style='white-space:nowrap;font-weight:600;color:#1a3a6e'>⑤ 金融（和潤企業/車貸）</td><td style='color:#4a5a7a;font-size:.8rem'>汽車貸款 &nbsp;·&nbsp; 車貸 &nbsp;·&nbsp; 融資租賃 &nbsp;·&nbsp; auto finance &nbsp;·&nbsp; leasing &nbsp;·&nbsp; 分期付款 &nbsp;·&nbsp; <em>+9 更多</em></td></tr><tr><td style='white-space:nowrap;font-weight:600;color:#1a3a6e'>⑥ 租車/車隊（和運/iRent）</td><td style='color:#4a5a7a;font-size:.8rem'>租車 &nbsp;·&nbsp; car rental &nbsp;·&nbsp; 車隊管理 &nbsp;·&nbsp; fleet management &nbsp;·&nbsp; 長租 &nbsp;·&nbsp; 短租 &nbsp;·&nbsp; <em>+7 更多</em></td></tr><tr><td style='white-space:nowrap;font-weight:600;color:#1a3a6e'>⑧ 車用產品（車美仕/ADAS）</td><td style='color:#4a5a7a;font-size:.8rem'>車用電子 &nbsp;·&nbsp; 汽車零件 &nbsp;·&nbsp; 車載系統 &nbsp;·&nbsp; OBD &nbsp;·&nbsp; 行車記錄器 &nbsp;·&nbsp; dashcam &nbsp;·&nbsp; <em>+10 更多</em></td></tr><tr><td style='white-space:nowrap;font-weight:600;color:#1a3a6e'>⑨ 車體製造（和泰巴士）</td><td style='color:#4a5a7a;font-size:.8rem'>車體製造 &nbsp;·&nbsp; 巴士車體 &nbsp;·&nbsp; bus body &nbsp;·&nbsp; vehicle body &nbsp;·&nbsp; 特殊車輛 &nbsp;·&nbsp; electric bus &nbsp;·&nbsp; <em>+4 更多</em></td></tr><tr><td style='white-space:nowrap;font-weight:600;color:#1a3a6e'>⑩ 產險科技（和泰產險）</td><td style='color:#4a5a7a;font-size:.8rem'>保險科技 &nbsp;·&nbsp; insurtech &nbsp;·&nbsp; UBI &nbsp;·&nbsp; 車險 &nbsp;·&nbsp; usage-based insurance &nbsp;·&nbsp; telematics insurance &nbsp;·&nbsp; <em>+8 更多</em></td></tr><tr><td style='white-space:nowrap;font-weight:600;color:#1a3a6e'>⑪ 倉儲機器人（TMHT叉車/AGV）</td><td style='color:#4a5a7a;font-size:.8rem'>叉車 &nbsp;·&nbsp; 堆高機 &nbsp;·&nbsp; forklift &nbsp;·&nbsp; AGV &nbsp;·&nbsp; AMR &nbsp;·&nbsp; 倉儲自動化 &nbsp;·&nbsp; <em>+13 更多</em></td></tr><tr><td style='white-space:nowrap;font-weight:600;color:#1a3a6e'>⑫ MaaS（yoxi/去趣/和泰聯網）</td><td style='color:#4a5a7a;font-size:.8rem'>MaaS &nbsp;·&nbsp; ride hailing &nbsp;·&nbsp; 叫車 &nbsp;·&nbsp; yoxi &nbsp;·&nbsp; iRent &nbsp;·&nbsp; 共乘 &nbsp;·&nbsp; <em>+15 更多</em></td></tr><tr><td style='white-space:nowrap;font-weight:600;color:#1a3a6e'>⑬ 空調（大金 Daikin）</td><td style='color:#4a5a7a;font-size:.8rem'>空調 &nbsp;·&nbsp; 冷氣 &nbsp;·&nbsp; HVAC &nbsp;·&nbsp; 大金 &nbsp;·&nbsp; Daikin &nbsp;·&nbsp; 冷凍空調 &nbsp;·&nbsp; <em>+7 更多</em></td></tr><tr><td style='white-space:nowrap;font-weight:600;color:#1a3a6e'>AI 數位平台（橫跨各業務）</td><td style='color:#4a5a7a;font-size:.8rem'>人工智慧 &nbsp;·&nbsp; 機器學習 &nbsp;·&nbsp; AI &nbsp;·&nbsp; 大數據 &nbsp;·&nbsp; data platform &nbsp;·&nbsp; 個人化 &nbsp;·&nbsp; <em>+8 更多</em></td></tr></tbody>
+    </table>
+  </div>
+
+  <div class='section' style='font-size:.78rem;color:#7a8aaa;border-top:1px solid #eef0f6;padding-top:12px'>
+    <strong>摘要語言規則：</strong>
+    台灣・中國地區的新聞摘要以繁體中文生成；東南亞・全球地區以英文生成。<br>
+    <strong>顯示門檻：</strong>集團適配度 ≥ 1.8 才顯示於各地區報告中。
+    顯示數量上限：台灣 20・中國 15・
+    東南亞 10・全球 20。<br>
+    <strong>LLM：</strong>Qwen 2.5 7B（本地 Ollama）&nbsp;·&nbsp;
+    <strong>報告產生：</strong>2026-06-01 07:24
+  </div>
+</div>
+</body>
+</html>

@@ -1,6 +1,9 @@
 import sys
+import time
 import logging
 import datetime
+import subprocess
+import requests
 from scraper import run_all_scrapers
 from ai_processor import process_raw_articles_by_region, get_sheet
 from weekly_report import load_all_tabs, analyze_rows, render_html
@@ -8,6 +11,36 @@ from email_sender import send_weekly_report
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
+
+OLLAMA_URL = "http://localhost:11434"
+
+def ensure_ollama_running(timeout: int = 30) -> bool:
+    try:
+        requests.get(f"{OLLAMA_URL}/api/tags", timeout=3)
+        logger.info("Ollama already running")
+        return True
+    except Exception:
+        pass
+
+    logger.info("Ollama not running — starting ollama serve ...")
+    subprocess.Popen(
+        ["ollama", "serve"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        time.sleep(2)
+        try:
+            requests.get(f"{OLLAMA_URL}/api/tags", timeout=3)
+            logger.info("Ollama started successfully")
+            return True
+        except Exception:
+            pass
+
+    logger.error("Ollama failed to start within %ds", timeout)
+    return False
 
 REGIONS = ["台灣", "中國", "東南亞", "全球"]
 
@@ -22,6 +55,9 @@ def step1_scrape(tab_name=None):
 def step2_ai(tab_name=None):
     start = datetime.datetime.now()
     logger.info("Step2 START (AI+Firebase)")
+    if not ensure_ollama_running():
+        logger.error("Step2 ABORT — Ollama could not be started")
+        return
     if tab_name is None:
         tab_name = "raw_" + datetime.datetime.now().strftime("%Y-%m-%d")
     total_saved = total_errors = 0
@@ -81,7 +117,7 @@ def step3_report(tab_name: str | None = None, send_email: bool = False):
     logger.info("Step3 DONE: %.1fs", duration)
 
 
-def daily_run(send_email: bool = False):
+def daily_run(send_email: bool = True):
     start = datetime.datetime.now()
     logger.info("dailyRun START: %s", start.isoformat())
     tab_name = step1_scrape()

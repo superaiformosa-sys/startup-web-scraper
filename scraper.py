@@ -9,7 +9,7 @@ import requests
 import gspread
 from google.oauth2.service_account import Credentials
 import json
-from config import SOURCES, SKIP_KEYWORDS, MAX_ARTICLES_PER_SOURCE, SHEETS_ID, GOOGLE_CREDENTIALS_JSON
+from config import SOURCES, SKIP_KEYWORDS, FUNDING_TITLE_KEYWORDS, MAX_ARTICLES_PER_SOURCE, SHEETS_ID, GOOGLE_CREDENTIALS_JSON
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +115,11 @@ def should_skip(title: str) -> bool:
     return any(kw.lower() in t for kw in SKIP_KEYWORDS)
 
 
+def has_funding_keyword(title: str) -> bool:
+    t = title.lower()
+    return any(kw.lower() in t for kw in FUNDING_TITLE_KEYWORDS)
+
+
 def scrape_source(source: dict, ws: gspread.Worksheet, existing_urls: set,
                   seen_titles: list[str], articles: list[dict] | None = None) -> int:
     if articles is None:
@@ -131,6 +136,10 @@ def scrape_source(source: dict, ws: gspread.Worksheet, existing_urls: set,
         if should_skip(article["title"]):
             skipped_kw += 1
             logger.debug("  Skip (keyword): %s", article["title"][:50])
+            continue
+        if source.get("require_funding") and not has_funding_keyword(article["title"]):
+            skipped_kw += 1
+            logger.debug("  Skip (no funding keyword): %s", article["title"][:50])
             continue
         if _is_duplicate_title(article["title"], seen_titles):
             skipped_dup += 1

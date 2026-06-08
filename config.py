@@ -28,13 +28,12 @@ MAX_GEMINI_PER_RUN      = 20
 
 SOURCES = [
     # ── 台灣 ──
-    {"id": "bnext",      "name": "數位時代",            "rss": "https://www.bnext.com.tw/rss",                                                                                                    "region": "台灣", "enabled": True},
-    {"id": "meet",       "name": "Meet 創業小聚",        "rss": "https://meet.bnext.com.tw/rss",                                                                                                   "region": "台灣", "enabled": True},
+    {"id": "bnext",      "name": "數位時代",            "rss": "https://www.bnext.com.tw/rss",                                                                                                    "region": "台灣", "enabled": True, "require_funding": True},
+    {"id": "meet",       "name": "Meet 創業小聚",        "rss": "https://meet.bnext.com.tw/rss",                                                                                                   "region": "台灣", "enabled": True, "require_funding": True},
     {"id": "tc_tw",      "name": "TechCrunch TW",        "rss": "https://news.google.com/rss/search?q=新創+募資+台灣&hl=zh-TW&gl=TW&ceid=TW:zh-Hant",                                             "region": "台灣", "enabled": True},
     {"id": "gn_tw1",     "name": "台灣新創 Google News", "rss": "https://news.google.com/rss/search?q=台灣+新創+融資+完成&hl=zh-TW&gl=TW&ceid=TW:zh-Hant",                                         "region": "台灣", "enabled": True},
-    # 新增台灣來源
-    {"id": "techorange",  "name": "科技報橘",            "rss": "https://buzzorange.com/techorange/feed/",                                                                                         "region": "台灣", "enabled": True},
-    {"id": "inside_tw",   "name": "Inside 硬塞",         "rss": "https://www.inside.com.tw/feeds",                                                                                                 "region": "台灣", "enabled": True},
+    {"id": "techorange",  "name": "科技報橘",            "rss": "https://buzzorange.com/techorange/feed/",                                                                                         "region": "台灣", "enabled": True, "require_funding": True},
+    {"id": "inside_tw",   "name": "Inside 硬塞",         "rss": "https://www.inside.com.tw/feeds",                                                                                                 "region": "台灣", "enabled": True, "require_funding": True},
     {"id": "gn_tw_fund",  "name": "台灣融資 Google News", "rss": "https://news.google.com/rss/search?q=台灣+新創+(A輪+OR+B輪+OR+種子輪+OR+天使輪+OR+IPO)+融資&hl=zh-TW&gl=TW&ceid=TW:zh-Hant",  "region": "台灣", "enabled": True},
     # ── 中國 ──
     {"id": "36kr",       "name": "36氪",               "rss": "https://36kr.com/feed",                                                               "region": "中國", "enabled": True},
@@ -42,14 +41,20 @@ SOURCES = [
     {"id": "cn_google",  "name": "中國新創 Google News", "rss": "https://news.google.com/rss/search?q=中国+创业+融资+startup&hl=zh-CN&gl=CN&ceid=CN:zh-Hans", "region": "中國", "enabled": True},
     {"id": "cn_google2", "name": "中國科技 Google News", "rss": "https://news.google.com/rss/search?q=中国+科技+独角兽+IPO&hl=zh-CN&gl=CN&ceid=CN:zh-Hans",   "region": "中國", "enabled": True},
     # ── 東南亞 ──
-    # Nikkei Asia: broad Asia tech/business, 50 recent articles per fetch
-    {"id": "nikkei_asia","name": "Nikkei Asia",          "rss": "https://asia.nikkei.com/rss/feed/nar",                                                "region": "東南亞", "enabled": True},
-    # Technode: Asia tech news, 14+ recent articles
-    {"id": "technode",   "name": "Technode",              "rss": "https://technode.com/feed/",                                                          "region": "東南亞", "enabled": True},
-    # Google News country-specific queries (no year filter — returns individual company news)
-    {"id": "sea_sg",     "name": "Singapore Startups",    "rss": "https://news.google.com/rss/search?q=startup+raised+funding+Singapore&hl=en&gl=SG&ceid=SG:en",        "region": "東南亞", "enabled": True},
-    {"id": "sea_id_vn",  "name": "ID/VN Startups",        "rss": "https://news.google.com/rss/search?q=startup+raised+funding+Indonesia+OR+Vietnam&hl=en&gl=SG&ceid=SG:en","region": "東南亞", "enabled": True},
-    {"id": "sea_apac",   "name": "APAC Startup Funding",  "rss": "https://news.google.com/rss/search?q=%22raised%22+%22series%22+startup+%22Asia%22+%22million%22&hl=en&gl=SG&ceid=SG:en","region": "東南亞", "enabled": True},
+    # Nikkei Asia: broad Asia tech/business
+    {"id": "nikkei_asia","name": "Nikkei Asia",           "rss": "https://asia.nikkei.com/rss/feed/nar",                                                                                     "region": "東南亞", "enabled": True, "require_funding": True},
+    # Technode: reports Chinese tech news (excluded from SEA page filter)
+    {"id": "technode",   "name": "Technode",               "rss": "https://technode.com/feed/",                                                                                               "region": "東南亞", "enabled": True, "require_funding": True},
+    # Tech In Asia: best SEA startup coverage (SG/TH/MY/ID/VN/PH)
+    {"id": "techinasia", "name": "Tech In Asia",           "rss": "https://www.techinasia.com/feed",                                                                                          "region": "東南亞", "enabled": True, "require_funding": True},
+    # e27: Singapore-based SEA startup media
+    {"id": "e27",        "name": "e27",                    "rss": "https://e27.co/feed/",                                                                                                     "region": "東南亞", "enabled": True, "require_funding": True},
+    # Google News country-specific queries
+    {"id": "sea_sg",     "name": "Singapore Startups",    "rss": "https://news.google.com/rss/search?q=startup+raised+funding+Singapore&hl=en&gl=SG&ceid=SG:en",                             "region": "東南亞", "enabled": True},
+    {"id": "sea_th",     "name": "Thailand Startups",     "rss": "https://news.google.com/rss/search?q=startup+raised+funding+Thailand&hl=en&gl=TH&ceid=TH:en",                              "region": "東南亞", "enabled": True},
+    {"id": "sea_my",     "name": "Malaysia Startups",     "rss": "https://news.google.com/rss/search?q=startup+raised+funding+Malaysia&hl=en&gl=MY&ceid=MY:en",                              "region": "東南亞", "enabled": True},
+    {"id": "sea_id_vn",  "name": "ID/VN Startups",        "rss": "https://news.google.com/rss/search?q=startup+raised+funding+Indonesia+OR+Vietnam&hl=en&gl=SG&ceid=SG:en",                 "region": "東南亞", "enabled": True},
+    {"id": "sea_apac",   "name": "APAC Startup Funding",  "rss": "https://news.google.com/rss/search?q=%22raised%22+%22series%22+startup+%22Southeast+Asia%22+%22million%22&hl=en&gl=SG&ceid=SG:en","region": "東南亞", "enabled": True},
     # ── 全球 ──
     {"id": "tc_startup", "name": "TechCrunch Startups",   "rss": "https://techcrunch.com/category/startups/feed/",                                      "region": "全球", "enabled": True},
     {"id": "venturebeat","name": "VentureBeat",            "rss": "https://venturebeat.com/category/business/feed/",                                     "region": "全球", "enabled": True},
@@ -143,4 +148,14 @@ FIT_KEYWORDS = {
 
 
 SKIP_KEYWORDS = ["廣告","sponsor","特別報導","白皮書","webinar","招募","徵才"]
+
+# 廣泛RSS來源（非Google News查詢）需標題命中至少一個新創相關關鍵字才儲存
+FUNDING_TITLE_KEYWORDS = [
+    # 中文新創/融資
+    "新創", "融資", "募資", "A輪", "B輪", "C輪", "D輪", "種子輪", "天使輪", "Pre-A",
+    "IPO", "掛牌", "上市", "獲投", "創業", "新創公司", "科技新創",
+    # 英文新創/融資
+    "startup", "raised", "series a", "series b", "series c", "series d",
+    "seed round", "funding", "ipo", "unicorn", "venture", "founder",
+]
 FX = {"TWD": 32, "CNY": 7.2, "JPY": 155, "SGD": 0.74, "MYR": 4.7}

@@ -45,8 +45,14 @@ STAGE_ORDER = ["種子輪", "天使輪", "Pre-A", "A輪", "B輪", "C輪", "D輪"
 
 # ── Data loading ──
 
+def _current_week_start(today: datetime.date) -> datetime.date:
+    """本週的週日（Sun-Sat 週期的第一天）。"""
+    days_since_sunday = (today.weekday() + 1) % 7
+    return today - datetime.timedelta(days=days_since_sunday)
+
+
 def load_all_tabs(gc_client=None) -> list[dict]:
-    """載入 Google Sheets 所有 raw_* tab 的資料"""
+    """載入 Google Sheets 所有 raw_* tab 的資料（本週日~今天）"""
     import gspread
     from google.oauth2.service_account import Credentials
     from config import SHEETS_ID, GOOGLE_CREDENTIALS_JSON
@@ -56,8 +62,8 @@ def load_all_tabs(gc_client=None) -> list[dict]:
     gc = gspread.authorize(creds)
     ss = gc.open_by_key(SHEETS_ID)
 
-    today = datetime.date.today()
-    week_ago = today - datetime.timedelta(days=7)
+    today      = datetime.date.today()
+    week_start = _current_week_start(today)
     rows = []
 
     for ws in ss.worksheets():
@@ -66,7 +72,7 @@ def load_all_tabs(gc_client=None) -> list[dict]:
         try:
             date_str = ws.title.replace("raw_", "")
             tab_date = datetime.date.fromisoformat(date_str)
-            if tab_date < week_ago:
+            if tab_date < week_start:
                 continue
         except ValueError:
             continue
@@ -114,8 +120,9 @@ def load_scored_map(collection: str) -> dict:
         db     = get_db()
         result = {}
         today  = _dt.date.today()
-        # Scan collections for last 7 days (pipeline may write to a different date's collection)
-        for delta in range(8):
+        # Scan Firebase collections from this week's Sunday to today (Sun-Sat week)
+        days_since_sunday = (today.weekday() + 1) % 7
+        for delta in range(days_since_sunday + 1):
             col_name = "startups_" + (today - _dt.timedelta(days=delta)).isoformat()
             try:
                 for doc in db.collection(col_name).stream():
@@ -452,7 +459,7 @@ def render_terminal(tab_name: str, rows: list[dict], stats: dict):
 
 _HTML_CSS = """
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #ffffff; color: #1a1a2e; font-family: 'Noto Sans TC', 'Microsoft JhengHei', Arial, sans-serif; font-size: 13px; }
+body { background: #ffffff; color: #1a1a2e; font-family: 'Microsoft JhengHei', 'Noto Sans TC', Arial, sans-serif; font-size: 13px; }
 .page { padding: 28px 32px; background: #ffffff; }
 .region-page { page-break-before: always; padding: 28px 32px; }
 /* Header */
@@ -463,7 +470,7 @@ body { background: #ffffff; color: #1a1a2e; font-family: 'Noto Sans TC', 'Micros
 .region-header h2 { font-size: 1.1rem; font-weight: 700; color: #ffffff; }
 .region-header .sub { color: #a8c4f0; font-size: 0.8rem; margin-top: 2px; }
 /* Stat cards */
-.cards-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #dde3ee; border-radius: 6px; overflow: hidden; }
+.cards-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #dde3ee; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
 .cards-table td { padding: 14px 0; text-align: center; border-right: 1px solid #dde3ee; background: #f0f4fc; }
 .cards-table td:last-child { border-right: none; }
 .card-num { font-size: 1.8rem; font-weight: 800; }
@@ -473,12 +480,11 @@ body { background: #ffffff; color: #1a1a2e; font-family: 'Noto Sans TC', 'Micros
 .section-title { font-size: 0.85rem; font-weight: 700; color: #1a3a6e; margin-bottom: 10px;
   padding-bottom: 6px; border-bottom: 2px solid #1a3a6e; text-transform: uppercase; letter-spacing: .06em; }
 /* Tables */
-table.dt { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+table.dt { width: 100%; border-collapse: collapse; font-size: 0.82rem; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
 table.dt th { background: #eef2fb; color: #3a4a6a; padding: 7px 10px; text-align: left;
   font-weight: 700; font-size: 0.75rem; border-bottom: 2px solid #c8d4ec; }
 table.dt td { padding: 7px 10px; border-bottom: 1px solid #eef0f6; vertical-align: top; }
 table.dt tr:last-child td { border-bottom: none; }
-table.dt tr:nth-child(even) td { background: #f8faff; }
 /* Score badges */
 .score-hi  { display: inline-block; background: #fff0dc; color: #a05000; font-weight: 700;
   padding: 2px 8px; border-radius: 4px; font-size: 0.82rem; border: 1px solid #f5c67a; }
@@ -491,9 +497,6 @@ table.dt tr:nth-child(even) td { background: #f8faff; }
 .badge-green  { background: #d4f4e2; color: #1a7a3e; }
 .badge-blue   { background: #ddeeff; color: #1a4a8e; }
 .badge-orange { background: #fdebd0; color: #a05000; }
-/* Bar */
-.bar-wrap { background: #dde3ee; border-radius: 3px; height: 6px; min-width: 60px; overflow: hidden; }
-.bar-fill  { height: 6px; border-radius: 3px; background: #2d7dd2; }
 /* Notable list */
 .notable-list { list-style: none; }
 .notable-list li { padding: 7px 0; border-bottom: 1px solid #eef0f6; }
@@ -523,6 +526,20 @@ def _score_badge(v: float | None) -> str:
     return f"<span class='score-lo'>{v:.1f}</span>"
 
 
+def _bar_table(pct: float, total_width: int = 120) -> str:
+    fill_w  = max(1, min(int(pct * total_width / 100), total_width - 1))
+    empty_w = total_width - fill_w
+    return (
+        f"<table width='{total_width}' cellspacing='0' cellpadding='0' border='0' "
+        f"style='height:6px;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt'><tr>"
+        f"<td width='{fill_w}' bgcolor='#2d7dd2' height='6' "
+        f"style='height:6px;line-height:6px;font-size:1px;background:#2d7dd2'>&nbsp;</td>"
+        f"<td width='{empty_w}' bgcolor='#dde3ee' height='6' "
+        f"style='height:6px;line-height:6px;font-size:1px;background:#dde3ee'>&nbsp;</td>"
+        f"</tr></table>"
+    )
+
+
 def _make_summary_page(tab_name: str, stats: dict, hotai_docs: list[dict],
                        today: datetime.date) -> str:
     week_str = today.strftime("第 %V 週")
@@ -532,21 +549,23 @@ def _make_summary_page(tab_name: str, stats: dict, hotai_docs: list[dict],
 
     # Region breakdown
     region_rows = ""
-    for region in _REGION_ORDER:
+    for idx_r, region in enumerate(_REGION_ORDER):
         cnt = stats["region_count"].get(region, 0)
         pct = cnt / total * 100 if total else 0
+        row_bg = " bgcolor='#f8faff'" if idx_r % 2 == 1 else ""
         region_rows += (
-            f"<tr><td>{region}</td><td><strong>{cnt}</strong></td><td>{pct:.1f}%</td>"
-            f"<td><div class='bar-wrap'><div class='bar-fill' style='width:{pct:.0f}%'></div></div></td></tr>"
+            f"<tr{row_bg}><td>{region}</td><td><strong>{cnt}</strong></td><td>{pct:.1f}%</td>"
+            f"<td>{_bar_table(pct)}</td></tr>"
         )
 
     # Industry heatmap
     industry_rows = ""
-    for ind, cnt in stats["industry_count"].most_common(10):
+    for idx_i, (ind, cnt) in enumerate(stats["industry_count"].most_common(10)):
         pct = cnt / max_ind * 100
+        row_bg = " bgcolor='#f8faff'" if idx_i % 2 == 1 else ""
         industry_rows += (
-            f"<tr><td>{_html.escape(ind)}</td>"
-            f"<td><div class='bar-wrap'><div class='bar-fill' style='width:{pct:.0f}%'></div></div></td>"
+            f"<tr{row_bg}><td>{_html.escape(ind)}</td>"
+            f"<td>{_bar_table(pct)}</td>"
             f"<td><strong>{cnt}</strong></td></tr>"
         )
 
@@ -568,8 +587,9 @@ def _make_summary_page(tab_name: str, stats: dict, hotai_docs: list[dict],
             ml      = doc.get("mlScore")
             name_link = f"<a href='{url}' target='_blank'>{name}</a>" if url else name
             name_cell = name_link + (f"<br><small style='color:#7a8aaa'>{name_en}</small>" if name_en else "")
+            row_bg = " bgcolor='#f8faff'" if i % 2 == 0 else ""
             rows_h += (
-                f"<tr><td class='idx'>{i}</td>"
+                f"<tr{row_bg}><td class='idx'>{i}</td>"
                 f"<td>{name_cell}</td>"
                 f"<td><span class='badge badge-blue'>{ind_str}</span></td>"
                 f"<td><span class='badge badge-orange'>{stage}</span></td>"
@@ -586,7 +606,7 @@ def _make_summary_page(tab_name: str, stats: dict, hotai_docs: list[dict],
     <strong>集團適配度</strong>：40% Qwen語意 + 40% 業務關鍵字 + 20% 地區/輪次規則 &nbsp;｜&nbsp;
     <strong>新創推薦度</strong>：40% Qwen新聞可信度 + 25% 融資金額 + 20% 輪次成熟度 + 15% 投資人/描述品質
   </div>
-  <table class='dt'><thead><tr>
+  <table class='dt' cellspacing='0'><thead><tr>
     <th>#</th><th>公司</th><th>產業</th><th>輪次</th>
     <th>集團適配度</th><th>新創推薦度</th><th>關鍵字</th><th>地區</th><th>業務標籤</th>
   </tr></thead><tbody>{rows_h}</tbody></table>
@@ -594,11 +614,12 @@ def _make_summary_page(tab_name: str, stats: dict, hotai_docs: list[dict],
 
     # Source activity
     source_rows = ""
-    for src, cnt in stats["source_count"].most_common(10):
+    for idx_s, (src, cnt) in enumerate(stats["source_count"].most_common(10)):
         pct = cnt / max_src * 100
+        row_bg = " bgcolor='#f8faff'" if idx_s % 2 == 1 else ""
         source_rows += (
-            f"<tr><td>{_html.escape(src)}</td>"
-            f"<td><div class='bar-wrap'><div class='bar-fill' style='width:{pct:.0f}%'></div></div></td>"
+            f"<tr{row_bg}><td>{_html.escape(src)}</td>"
+            f"<td>{_bar_table(pct)}</td>"
             f"<td><strong>{cnt}</strong></td></tr>"
         )
 
@@ -608,22 +629,22 @@ def _make_summary_page(tab_name: str, stats: dict, hotai_docs: list[dict],
     <div class='meta'>{week_str} &nbsp;·&nbsp; {today.strftime('%Y-%m-%d')} &nbsp;·&nbsp; {_html.escape(tab_name)}</div>
   </div>
 
-  <table class='cards-table'><tr>
-    <td><div class='card-num' style='color:#1a5cb5'>{total}</div><div class='card-label'>總文章數</div></td>
-    <td><div class='card-num' style='color:#1a7a3e'>{stats['processed_count'].get('true',0)}</div><div class='card-label'>AI 已分析</div></td>
-    <td><div class='card-num' style='color:#a05000'>{len(stats['funding_articles'])}</div><div class='card-label'>融資新聞</div></td>
-    <td><div class='card-num' style='color:#6a1a8e'>{len(stats['notable'])}</div><div class='card-label'>重點新聞</div></td>
+  <table class='cards-table' cellspacing='0' cellpadding='0'><tr>
+    <td bgcolor='#f0f4fc'><div class='card-num' style='color:#1a5cb5'>{total}</div><div class='card-label'>總文章數</div></td>
+    <td bgcolor='#f0f4fc'><div class='card-num' style='color:#1a7a3e'>{stats['processed_count'].get('true',0)}</div><div class='card-label'>AI 已分析</div></td>
+    <td bgcolor='#f0f4fc'><div class='card-num' style='color:#a05000'>{len(stats['funding_articles'])}</div><div class='card-label'>融資新聞</div></td>
+    <td bgcolor='#f0f4fc'><div class='card-num' style='color:#6a1a8e'>{len(stats['notable'])}</div><div class='card-label'>重點新聞</div></td>
   </tr></table>
 
   <div class='section'>
     <div class='section-title'>地區分佈</div>
-    <table class='dt'><thead><tr><th>地區</th><th>文章數</th><th>佔比</th><th>趨勢</th></tr></thead>
+    <table class='dt' cellspacing='0'><thead><tr><th>地區</th><th>文章數</th><th>佔比</th><th>趨勢</th></tr></thead>
     <tbody>{region_rows}</tbody></table>
   </div>
 
   <div class='section'>
     <div class='section-title'>產業熱度 Top 10</div>
-    <table class='dt'><thead><tr><th>產業</th><th>熱度</th><th>數量</th></tr></thead>
+    <table class='dt' cellspacing='0'><thead><tr><th>產業</th><th>熱度</th><th>數量</th></tr></thead>
     <tbody>{industry_rows}</tbody></table>
   </div>
 
@@ -631,7 +652,7 @@ def _make_summary_page(tab_name: str, stats: dict, hotai_docs: list[dict],
 
   <div class='section'>
     <div class='section-title'>來源活躍度</div>
-    <table class='dt'><thead><tr><th>媒體</th><th>趨勢</th><th>數量</th></tr></thead>
+    <table class='dt' cellspacing='0'><thead><tr><th>媒體</th><th>趨勢</th><th>數量</th></tr></thead>
     <tbody>{source_rows}</tbody></table>
   </div>
 
@@ -731,8 +752,9 @@ def _make_region_page(region: str, scored_map: dict) -> str:
         funding_html = f" <span class='badge badge-green'>{funding}</span>" if funding else ""
         company_cell += stage_html + funding_html
 
+        row_bg = " bgcolor='#f8faff'" if i % 2 == 0 else ""
         rows_html += (
-            f"<tr>"
+            f"<tr{row_bg}>"
             f"<td class='idx'>{i}</td>"
             f"<td>{title_cell}</td>"                                          # 新聞標題
             f"<td><span class='badge badge-blue'>{industry}</span><br>{company_cell}</td>"  # 公司名稱
@@ -753,7 +775,7 @@ def _make_region_page(region: str, scored_map: dict) -> str:
     </div>
   </div>
   <div class='hotai-note'>集團適配度：40% Qwen語意 + 40% 業務關鍵字 + 20% 地區/輪次規則</div>
-  <table class='dt'>
+  <table class='dt' cellspacing='0'>
     <thead><tr>
       <th>#</th>
       <th>新聞標題</th>
@@ -808,7 +830,7 @@ def _make_scoring_legend() -> str:
 
   <div class='section'>
     <div class='section-title'>評分維度定義</div>
-    <table class='dt'>
+    <table class='dt' cellspacing='0'>
       <thead><tr>
         <th style='width:15%'>評分欄位</th>
         <th style='width:30%'>定義</th>
@@ -868,7 +890,7 @@ def _make_scoring_legend() -> str:
       以下關鍵字用於計算 <strong>關鍵字分數（mlScore）</strong>，
       也作為 <strong>集團適配度（groupFitScore）</strong> 的 40% ML 分數依據。
     </p>
-    <table class='dt'>
+    <table class='dt' cellspacing='0'>
       <thead><tr><th>業務版圖</th><th>關鍵字（每類取前 6 個顯示）</th></tr></thead>
       <tbody>{kw_rows}</tbody>
     </table>
@@ -912,7 +934,10 @@ def render_html(tab_name: str, rows: list[dict], stats: dict,
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>新創情報周報 {today.strftime("第%V週")}</title>
+<!--[if !mso]><!-->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;800&display=swap" rel="stylesheet">
+<!--<![endif]-->
+<!--[if mso]><style>body,td,th,a{{font-family:'Microsoft JhengHei',Arial,sans-serif!important;}}</style><![endif]-->
 <style>{_HTML_CSS}</style>
 </head>
 <body>

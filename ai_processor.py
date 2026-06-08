@@ -983,7 +983,11 @@ def process_raw_articles_by_region(region: str, tab_name: str) -> dict:
                     item["title"], item["summary"], item["prefilled"]
                 )
                 result = _call_ollama_with_retry(prompt)
-                if result is None or result.get("isStartup") is False:
+                if result is None:
+                    # Ollama unreachable — leave unprocessed so next run retries
+                    logger.error("    ❌ Ollama unavailable, skipping row %d (will retry next run)", item["row"])
+                    errors += 1
+                elif result.get("isStartup") is False:
                     rejected_rows_s1.append(item["row"])
                     logger.info("    ✗ not startup")
                 else:
