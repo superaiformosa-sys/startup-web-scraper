@@ -10,53 +10,26 @@ from google.oauth2.service_account import Credentials
 from config import (
     GEMINI_API_KEY, GEMINI_ENDPOINT, MAX_GEMINI_PER_RUN,
     SHEETS_ID, GOOGLE_CREDENTIALS_JSON, FIT_KEYWORDS, FX,
+    OLLAMA_BASE_URL, OLLAMA_MODEL, TAIWAN_DOMAINS, HOTAI_MIN_FIT_SCORE,
+    RULE_SKIP_TITLE, STRONG_FUNDING_KW, STRONG_STARTUP_KW,
+    VALID_INDUSTRIES, INDUSTRY_ALIAS, STAGE_PLACEHOLDERS, STAGE_ALIAS,
+    PREFERRED_STAGES, PREFERRED_REGIONS, REGION_BONUS_PREFERRED, REGION_BONUS_CHINA,
+    STAGE_BONUS_PREFERRED, STAGE_BONUS_EARLY, STAGE_BONUS_LATE,
+    CORE_BUSINESS_BONUS, CORE_BUSINESS_HITS,
+    GROUP_FIT_BASELINE, GROUP_FIT_WEIGHT_QWEN, GROUP_FIT_WEIGHT_KEYWORD, GROUP_FIT_WEIGHT_RULE,
+    GROUP_FIT_FALLBACK_WEIGHT_KEYWORD, GROUP_FIT_FALLBACK_WEIGHT_RULE,
+    STARTUP_SCORE_WEIGHT_QWEN, STARTUP_SCORE_WEIGHT_FUNDING, STARTUP_SCORE_WEIGHT_STAGE,
+    STARTUP_SCORE_WEIGHT_QUALITY, STARTUP_SCORE_FALLBACK_WEIGHT_FUNDING,
+    STARTUP_SCORE_FALLBACK_WEIGHT_STAGE, STARTUP_SCORE_FALLBACK_WEIGHT_QUALITY,
+    FUNDING_SCORE_TIERS, FUNDING_SCORE_HAS_RAW_ONLY, FUNDING_SCORE_NONE,
+    STAGE_MATURITY_SCORE, STAGE_MATURITY_DEFAULT,
+    INVESTOR_COUNT_QUALITY_TIERS, DESC_LENGTH_QUALITY_TIERS,
 )
 from firebase_client import firestore_write
 
 logger = logging.getLogger(__name__)
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-TAIWAN_DOMAINS = ["meet.bnext", "bnext.com", "inside.com.tw", "technews.tw", "news.google.com", "ctee.com.tw", "udn.com"]
-
-OLLAMA_BASE_URL = "http://localhost:11434"
-OLLAMA_MODEL = "qwen3:8b"
-
-# ── 和泰相關性最低門檻：Qwen 評分 < 此值的文章不寫入 Firebase ──
-# 調高此值可讓 Firebase 更乾淨；調低可保留較多邊緣文章
-# groupFitScore 現在有 2.5 基準分（見 calc_scores），零訊號文章會落在剛好 2.5，
-# 3.0 這個門檻等於「至少要有一點 Qwen/關鍵字/業務規則訊號」才留下來。
-HOTAI_MIN_FIT_SCORE = 3.0
-
-# ── 規則集 ──
-
-# 標題出現任一關鍵字 → 直接跳過（不送 Qwen）
-RULE_SKIP_TITLE = [
-    # 股市
-    "股市", "大盤", "成交額", "成交量", "漲跌", "休盤", "收盤", "開盤", "指數",
-    "沪深", "恒指", "道指", "納指", "标普", "北向資金", "主力資金", "南向資金",
-    "半日", "午間", "日线", # 盤中報
-    # 總經/政策
-    "央行", "降準", "降息", "升息", "關稅", "制裁", "外匯", "匯率", "期貨",
-    "cpi", "ppi", "gdp", "通膨", "通胀", "貿易戰", "外貿", "進出口",
-    # 自然/雜項
-    "地震", "颱風", "天氣", "氣候", "廣告", "招募", "徵才", "白皮書",
-    # 大宗商品
-    "原油", "黃金", "鋰礦", "稀土", "礦產", "煤炭",
-    # 人物生活（非商業）
-    "裸辞", "降薪跳槽", "副業", "奥德赛", "职场极端",
-]
-
-# 標題有這些 → 幾乎確定是新創（配合有金額出現 → 直接 pre-accept）
-STRONG_FUNDING_KW = ["融资", "融資", "募资", "募資", "完成", "获得投资", "獲得投資",
-                     "pre-a", "天使轮", "天使輪", "种子轮", "種子輪",
-                     "series a", "series b", "series c", "a轮", "b轮", "c轮", "a輪", "b輪", "c輪"]
-
-# 標題有這些 → 直接 pre-accept（不需要有金額）
-STRONG_STARTUP_KW = ["新创", "新創", "startup", "创业", "創業",
-                     "加速器", "孵化器", "独角兽", "獨角獸",
-                     "ipo", "上市", "掛牌", "招股", "挂牌",
-                     "创始人", "創辦人", "founder",
-                     "早期项目", "早期專案"]
 
 # ── Google Sheets ──
 
@@ -435,68 +408,6 @@ def call_ollama(prompt: str) -> dict | None:
     return parse_response(resp.json().get("response", ""))
 
 
-_VALID_INDUSTRIES = {
-    "AI", "SaaS", "FinTech", "醫療", "物流", "電商", "Mobility",
-    "InsurTech", "GreenTech", "EdTech", "生技", "半導體", "機器人",
-    "CyberSecurity", "區塊鏈", "硬體", "其他",
-}
-
-# Qwen 常見輸出變體 → 標準標籤
-_INDUSTRY_ALIAS: dict[str, str] = {
-    # AI
-    "artificial intelligence": "AI", "人工智能": "AI", "机器学习": "AI",
-    "deep learning": "AI", "llm": "AI", "大模型": "AI", "ai软件": "AI",
-    # SaaS
-    "cloud software": "SaaS", "enterprise software": "SaaS", "雲端軟體": "SaaS",
-    "b2b software": "SaaS", "企業軟體": "SaaS",
-    # FinTech
-    "financial technology": "FinTech", "金融科技": "FinTech", "支付": "FinTech",
-    # 醫療
-    "healthcare": "醫療", "medical": "醫療", "health": "醫療", "medtech": "醫療",
-    # 生技
-    "biotech": "生技", "biotechnology": "生技", "life sciences": "生技",
-    # 電商
-    "ecommerce": "電商", "e-commerce": "電商", "retail": "電商",
-    # 物流
-    "logistics": "物流", "supply chain": "物流",
-    # Mobility
-    "autonomous": "Mobility", "electric vehicle": "Mobility", "ev": "Mobility",
-    "transportation": "Mobility",
-    # 機器人
-    "robotics": "機器人", "automation": "機器人",
-    # 半導體
-    "semiconductor": "半導體", "chip": "半導體", "晶片": "半導體",
-    # GreenTech
-    "clean energy": "GreenTech", "renewable": "GreenTech", "cleantech": "GreenTech",
-    # EdTech
-    "education": "EdTech", "e-learning": "EdTech",
-    # CyberSecurity
-    "cybersecurity": "CyberSecurity", "security": "CyberSecurity",
-    # 其他（defense / hardware etc）
-    "defense": "其他", "defence": "其他", "hardware": "硬體",
-}
-
-_STAGE_PLACEHOLDERS = {
-    "<a輪/b輪/種子輪/ipo/etc, or blank>", "a輪/b輪/種子輪/ipo/etc",
-    "ipo/etc", "輪次", "blank", "empty", "etc",
-}
-
-# 常見 stage 別名 → 標準輪次
-_STAGE_ALIAS: dict[str, str] = {
-    "seed": "種子輪", "seed round": "種子輪", "种子轮": "種子輪",
-    "angel": "天使輪", "天使轮": "天使輪",
-    "pre-a": "Pre-A", "pre a": "Pre-A", "prea": "Pre-A",
-    "series a": "A輪", "a轮": "A輪", "a round": "A輪",
-    "series b": "B輪", "b轮": "B輪",
-    "series c": "C輪", "c轮": "C輪",
-    "series d": "D輪", "d轮": "D輪",
-    "strategic": "戰略投資", "战略投资": "戰略投資",
-    "ipo": "IPO", "initial public offering": "IPO",
-    # 模糊 → 清空
-    "early stage": "", "early": "", "late stage": "", "growth": "",
-    "venture": "", "unknown": "",
-}
-
 def _normalize_result(d: dict) -> dict:
     """清理 Qwen 輸出中常見的格式問題"""
     # 拆分 "AI/SaaS" → ["AI", "SaaS"]，並解析別名
@@ -507,12 +418,12 @@ def _normalize_result(d: dict) -> dict:
             for part in re.split(r"[/、,，]", str(item)):
                 part = part.strip()
                 part_lower = part.lower()
-                if part in _VALID_INDUSTRIES:
+                if part in VALID_INDUSTRIES:
                     cleaned.append(part)
-                elif part_lower in _INDUSTRY_ALIAS:
-                    cleaned.append(_INDUSTRY_ALIAS[part_lower])
+                elif part_lower in INDUSTRY_ALIAS:
+                    cleaned.append(INDUSTRY_ALIAS[part_lower])
                 elif part:
-                    matched = next((v for k, v in _INDUSTRY_ALIAS.items() if k in part_lower), None)
+                    matched = next((v for k, v in INDUSTRY_ALIAS.items() if k in part_lower), None)
                     cleaned.append(matched if matched else "其他")
         industry = list(dict.fromkeys(cleaned))
     else:
@@ -542,13 +453,13 @@ def _normalize_result(d: dict) -> dict:
     # 正規化 stage
     stage = str(d.get("stage", "") or "")
     stage_lower = stage.lower()
-    if stage_lower in _STAGE_PLACEHOLDERS or stage.startswith("<") or stage_lower in ("none", "null", "undefined"):
+    if stage_lower in STAGE_PLACEHOLDERS or stage.startswith("<") or stage_lower in ("none", "null", "undefined"):
         d["stage"] = ""
-    elif stage_lower in _STAGE_ALIAS:
-        d["stage"] = _STAGE_ALIAS[stage_lower]
+    elif stage_lower in STAGE_ALIAS:
+        d["stage"] = STAGE_ALIAS[stage_lower]
     elif stage not in {"種子輪", "天使輪", "Pre-A", "A輪", "B輪", "C輪", "D輪", "戰略投資", "IPO"}:
         # 嘗試部分匹配
-        matched = next((v for k, v in _STAGE_ALIAS.items() if k in stage_lower), None)
+        matched = next((v for k, v in STAGE_ALIAS.items() if k in stage_lower), None)
         d["stage"] = matched if matched is not None else ""
 
     # 清除 fundingAmountRaw 佔位符
@@ -637,56 +548,35 @@ def calc_ml_score(result: dict) -> tuple[float, list[str]]:
     return _calc_keyword_score(result)
 
 
-_PREFERRED_STAGES   = {"A輪", "B輪", "C輪", "Pre-A", "戰略投資"}  # 和泰較可能投的輪次
-_PREFERRED_REGIONS  = {"台灣", "東南亞"}                          # 地理偏好加分
-
 def _business_rule_score(result: dict) -> float:
     """
     業務規則加分（0-10），作為第三個評分維度：
-      地區加分：台灣/東南亞各 +2；中國 +1
-      輪次偏好：A/B/C/Pre-A/戰略 +2；天使/種子 +1；IPO/D輪 +0.5
-      業務名直接命中：companyName 含和泰子公司相關業務詞 +2
+      地區加分：台灣/東南亞各 +REGION_BONUS_PREFERRED；中國 +REGION_BONUS_CHINA
+      輪次偏好：A/B/C/Pre-A/戰略 +STAGE_BONUS_PREFERRED；天使/種子 +STAGE_BONUS_EARLY；IPO/D輪 +STAGE_BONUS_LATE
+      業務名直接命中：companyName 含和泰子公司相關業務詞 +CORE_BUSINESS_BONUS
     """
     score = 0.0
     region = result.get("region", "")
-    if region in _PREFERRED_REGIONS:
-        score += 2.0
+    if region in PREFERRED_REGIONS:
+        score += REGION_BONUS_PREFERRED
     elif region == "中國":
-        score += 1.0
+        score += REGION_BONUS_CHINA
 
     stage = result.get("stage", "")
-    if stage in _PREFERRED_STAGES:
-        score += 2.0
+    if stage in PREFERRED_STAGES:
+        score += STAGE_BONUS_PREFERRED
     elif stage in {"天使輪", "種子輪"}:
-        score += 1.0
+        score += STAGE_BONUS_EARLY
     elif stage in {"IPO", "D輪"}:
-        score += 0.5
+        score += STAGE_BONUS_LATE
 
     # 直接命中和泰核心業務詞（含品牌名）
     combined = " ".join([
         result.get("companyName", ""), result.get("description", ""),
         " ".join(result.get("industry", [])),
     ]).lower()
-    core_hits = [
-        # MaaS / Mobility
-        "mobility", "maas", "ride hailing", "叫車", "共乘", "yoxi", "irent",
-        # InsurTech / 車險
-        "insurtech", "telematics", "車險", "auto insurance",
-        # 工業機器人 / 倉儲
-        "forklift", "agv", "amr", "叉車", "倉儲", "tmht", "toyota material",
-        # EV 充電
-        "ev charging", "充電", "charging station",
-        # 空調
-        "daikin", "大金", "hvac",
-        # 車體 / 商用車
-        "bus body", "巴士", "hino", "日野",
-        # 金融 / 租車
-        "auto finance", "車貸", "租車", "car rental",
-        # 品牌直接命中（排名最高加分）
-        "toyota", "lexus",
-    ]
-    if any(h in combined for h in core_hits):
-        score += 2.0
+    if any(h in combined for h in CORE_BUSINESS_HITS):
+        score += CORE_BUSINESS_BONUS
     return min(score, 10.0)
 
 
@@ -702,11 +592,12 @@ def calc_scores(result: dict) -> dict:
     │ （新創推薦度）  │ = 40% Qwen新聞可信度 + 25% 融資金額                  │
     │                 │   + 20% 輪次成熟度 + 15% 投資人/描述品質             │
     └─────────────────┴───────────────────────────────────────────────────────┘
-    groupFitScore 的 2.5 基準分：完全零訊號的文章（Qwen判0分+無關鍵字命中+無業務規則加分）
-    以前會落到 0 分，讓整批文章看起來「全部都不合適」而失去參考價值；多數被留下來的文章
-    多少都跟新創/投資沾邊，2.5 分讓分數分布往中間靠、保留區間內的相對排序，
-    同時把 HOTAI_MIN_FIT_SCORE 拉到 3.0，讓真正零訊號的文章還是會被濾掉。
+    groupFitScore 的 GROUP_FIT_BASELINE 基準分：完全零訊號的文章（Qwen判0分+無關鍵字命中+
+    無業務規則加分）以前會落到 0 分，讓整批文章看起來「全部都不合適」而失去參考價值；
+    多數被留下來的文章多少都跟新創/投資沾邊，基準分讓分數分布往中間靠、保留區間內的相對
+    排序，同時把 HOTAI_MIN_FIT_SCORE 拉高，讓真正零訊號的文章還是會被濾掉。
     同時保留 hotaiFitScore / fitScore 作為 backward-compat alias。
+    所有權重/門檻數字定義在 config.py，方便之後調整。
     """
     kw_score, tags = _calc_keyword_score(result)
     rule_score     = _business_rule_score(result)
@@ -720,15 +611,26 @@ def calc_scores(result: dict) -> dict:
             pass
         return None
 
+    def _tier_score(value: float, tiers: list[tuple[float, float]], default: float) -> float:
+        """tiers 是 (門檻, 分數) 由高到低排列的清單；回傳第一個 value >= 門檻 的分數。"""
+        for threshold, score in tiers:
+            if value >= threshold:
+                return score
+        return default
+
     qwen_hotai = _qwen("hotaiFitScore")   # Qwen 原始：對和泰策略的語意判斷
     qwen_rel   = _qwen("relevanceScore")  # Qwen 原始：新聞可信度/品質
 
     # ── 集團適配度 (groupFitScore) ──
-    # 2.5 基準分 + 40% Qwen hotaiFit + 40% 關鍵字命中 + 20% 業務規則
     if qwen_hotai is not None:
-        group_fit = 2.5 + 0.40 * qwen_hotai + 0.40 * kw_score + 0.20 * rule_score
+        group_fit = (GROUP_FIT_BASELINE
+                     + GROUP_FIT_WEIGHT_QWEN * qwen_hotai
+                     + GROUP_FIT_WEIGHT_KEYWORD * kw_score
+                     + GROUP_FIT_WEIGHT_RULE * rule_score)
     else:
-        group_fit = 2.5 + 0.60 * kw_score + 0.40 * rule_score
+        group_fit = (GROUP_FIT_BASELINE
+                     + GROUP_FIT_FALLBACK_WEIGHT_KEYWORD * kw_score
+                     + GROUP_FIT_FALLBACK_WEIGHT_RULE * rule_score)
 
     # ── 新創推薦度 (startupScore) ──
     # 各子分數先 normalize 到 0-10，再加權
@@ -736,36 +638,29 @@ def calc_scores(result: dict) -> dict:
     # A. 融資金額 (0-10)
     funding_usd = result.get("fundingAmountUSD") or 0
     funding_raw = result.get("fundingAmountRaw") or ""
-    if funding_usd >= 100_000_000:   fund_sc = 10.0
-    elif funding_usd >= 50_000_000:  fund_sc = 8.0
-    elif funding_usd >= 10_000_000:  fund_sc = 6.0
-    elif funding_usd >= 1_000_000:   fund_sc = 4.0
-    elif funding_raw:                fund_sc = 2.0
-    else:                            fund_sc = 0.0
+    fund_sc = _tier_score(funding_usd, FUNDING_SCORE_TIERS,
+                          FUNDING_SCORE_HAS_RAW_ONLY if funding_raw else FUNDING_SCORE_NONE)
 
     # B. 融資輪次成熟度 (0-10)
-    stage_sc = {
-        "IPO": 10.0, "D輪": 9.0, "C輪": 8.0, "B輪": 7.0,
-        "A輪": 6.0,  "Pre-A": 5.0, "天使輪": 4.0, "種子輪": 3.0,
-        "戰略投資": 6.0,
-    }.get(result.get("stage", ""), 1.0)
+    stage_sc = STAGE_MATURITY_SCORE.get(result.get("stage", ""), STAGE_MATURITY_DEFAULT)
 
     # C. 投資人資料 + 描述品質 (0-10)
     investors = result.get("investors") or []
     desc      = result.get("description") or ""
-    quality   = 0.0
-    if len(investors) >= 3:  quality += 6.0
-    elif len(investors) >= 1: quality += 3.0
-    if len(desc) >= 80:      quality += 4.0
-    elif len(desc) >= 40:    quality += 2.0
-    quality = min(quality, 10.0)
+    quality   = (_tier_score(len(investors), INVESTOR_COUNT_QUALITY_TIERS, 0.0)
+                 + _tier_score(len(desc), DESC_LENGTH_QUALITY_TIERS, 0.0))
+    quality   = min(quality, 10.0)
 
-    # 40% Qwen + 25% 金額 + 20% 輪次 + 15% 品質
     if qwen_rel is not None:
-        startup = 0.40 * qwen_rel + 0.25 * fund_sc + 0.20 * stage_sc + 0.15 * quality
+        startup = (STARTUP_SCORE_WEIGHT_QWEN * qwen_rel
+                   + STARTUP_SCORE_WEIGHT_FUNDING * fund_sc
+                   + STARTUP_SCORE_WEIGHT_STAGE * stage_sc
+                   + STARTUP_SCORE_WEIGHT_QUALITY * quality)
     else:
         # Qwen 缺失時重新分配權重
-        startup = 0.40 * fund_sc + 0.35 * stage_sc + 0.25 * quality
+        startup = (STARTUP_SCORE_FALLBACK_WEIGHT_FUNDING * fund_sc
+                   + STARTUP_SCORE_FALLBACK_WEIGHT_STAGE * stage_sc
+                   + STARTUP_SCORE_FALLBACK_WEIGHT_QUALITY * quality)
 
     clamp = lambda v: min(round(v, 1), 10.0)
 

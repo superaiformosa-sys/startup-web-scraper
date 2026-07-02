@@ -8,11 +8,10 @@ from scraper import run_all_scrapers
 from ai_processor import process_raw_articles_by_region, OLLAMA_MODEL
 from weekly_report import load_all_tabs, analyze_rows, render_html
 from email_sender import send_weekly_report
+from config import OLLAMA_BASE_URL as OLLAMA_URL, REGIONS, LOOPED_REGIONS, REGION_WEEKLY_CAP
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
-
-OLLAMA_URL = "http://localhost:11434"
 
 def ensure_ollama_running(timeout: int = 30) -> bool:
     try:
@@ -62,14 +61,6 @@ def warm_up_ollama_model(timeout: int = 280) -> None:
         logger.info("Ollama model warmed up (%.1fs)", time.time() - start)
     except Exception as e:
         logger.warning("Ollama warm-up failed (will proceed anyway): %s", e)
-
-REGIONS = ["台灣", "中國", "東南亞", "全球"]
-
-# 這兩區單次 process_raw_articles_by_region 呼叫的預設上限（台灣30/中國20，見 ai_processor.py）
-# 是為「每天都有機會被下一次執行撿回來重跑」設計的。改成週爬蟲後，一週只有一個 sheet
-# tab，沒處理完的文章不會再被撿回來，所以把上限拉高到週用量（50篇），一次呼叫處理完。
-LOOPED_REGIONS    = ("台灣", "中國")
-REGION_WEEKLY_CAP = 50   # 每區這次執行最多處理幾篇，避免無上限拖垮 Ollama
 
 def step1_scrape(tab_name=None):
     start = datetime.datetime.now()

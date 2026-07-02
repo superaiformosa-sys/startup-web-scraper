@@ -14,7 +14,11 @@ import re
 import datetime
 from collections import Counter
 from ai_processor import get_sheet
-from config import SOURCES
+from config import (
+    SOURCES, REGION_EMOJI, INDUSTRY_COLOR, STAGE_ORDER, REGION_ORDER,
+    MIN_DISPLAY_GROUP_FIT, REGION_DISPLAY_MAX, REGION_DISPLAY_MIN,
+    SEA_EXCLUDE_SOURCES, INDUSTRY_KEYWORDS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,17 +32,6 @@ from rich import box
 from rich.align import Align
 
 console = Console(width=110)
-
-REGION_EMOJI = {"台灣": "🇹🇼", "中國": "🇨🇳", "東南亞": "🌏", "全球": "🌐"}
-INDUSTRY_COLOR = {
-    "AI": "bright_cyan", "SaaS": "bright_blue", "FinTech": "bright_green",
-    "醫療": "bright_red", "物流": "yellow", "電商": "bright_magenta",
-    "Mobility": "orange3", "InsurTech": "steel_blue1", "GreenTech": "green3",
-    "EdTech": "gold1", "生技": "pale_turquoise1", "半導體": "bright_white",
-    "機器人": "plum2", "CyberSecurity": "red1", "區塊鏈": "deep_sky_blue1",
-    "硬體": "grey74", "其他": "grey50",
-}
-STAGE_ORDER = ["種子輪", "天使輪", "Pre-A", "A輪", "B輪", "C輪", "D輪", "戰略投資"]
 
 
 # ── Data loading ──
@@ -141,22 +134,6 @@ def load_scored_map(collection: str) -> dict:
 
 
 # ── Article title analysis (no AI needed) ──
-
-INDUSTRY_KEYWORDS = {
-    "AI": ["ai", "人工智慧", "llm", "大模型", "機器學習", "深度學習", "gpt", "生成式"],
-    "FinTech": ["支付", "fintech", "金融科技", "借貸", "區塊鏈", "數位銀行", "crypto", "defi"],
-    "生技": ["生技", "biotech", "醫藥", "基因", "藥物", "臨床", "製藥", "生物"],
-    "醫療": ["醫療", "健康", "medtech", "遠距", "診斷", "health", "醫院", "醫材"],
-    "SaaS": ["saas", "雲端", "軟體", "erp", "crm", "b2b", "訂閱", "enterprise"],
-    "電商": ["電商", "電子商務", "零售", "marketplace", "ecommerce", "購物"],
-    "Mobility": ["自駕", "電動車", "ev", "充電", "共乘", "車聯網", "mobility"],
-    "GreenTech": ["green", "永續", "碳", "solar", "再生能源", "cleantech", "淨零"],
-    "EdTech": ["教育", "edtech", "學習", "課程", "teaching"],
-    "半導體": ["晶片", "半導體", "chip", "wafer", "封裝", "ic設計"],
-    "物流": ["物流", "供應鏈", "倉儲", "配送", "logistics"],
-    "機器人": ["機器人", "robot", "automation", "自動化"],
-}
-
 
 def guess_industry(title: str, content: str) -> list[str]:
     combined = (title + " " + content[:500]).lower()
@@ -511,8 +488,6 @@ a { color: #1a5cb5; }
 @media print { body { background: #ffffff; } .region-page { page-break-before: always; } }
 """
 
-_REGION_ORDER = ["台灣", "東南亞", "中國", "全球"]
-
 
 def _score_badge(v: float | None) -> str:
     if v is None:
@@ -547,7 +522,7 @@ def _make_summary_page(tab_name: str, stats: dict, hotai_docs: list[dict],
 
     # Region breakdown
     region_rows = ""
-    for idx_r, region in enumerate(_REGION_ORDER):
+    for idx_r, region in enumerate(REGION_ORDER):
         cnt = stats["region_count"].get(region, 0)
         pct = cnt / total * 100 if total else 0
         row_bg = " bgcolor='#f8faff'" if idx_r % 2 == 1 else ""
@@ -658,16 +633,6 @@ def _make_summary_page(tab_name: str, stats: dict, hotai_docs: list[dict],
 </div>"""
 
 
-MIN_DISPLAY_GROUP_FIT = 3.0   # 低於此集團適配度的文章不顯示在報告中（呼應 ai_processor.HOTAI_MIN_FIT_SCORE）
-
-# 每個地區的顯示上下限
-REGION_DISPLAY_MAX = {"台灣": 20, "中國": 15, "東南亞": 10, "全球": 20}
-REGION_DISPLAY_MIN = {"台灣": 10, "中國": 10, "東南亞":  5, "全球": 10}
-
-# 東南亞頁面排除這些來源（實際報導中國/台灣內容，但被標記為東南亞）
-_SEA_EXCLUDE_SOURCES = {"technode", "cn_google", "cn_google2", "36kr", "lieyunwang",
-                        "bnext", "meet", "tc_tw", "gn_tw1",
-                        "techorange", "inside_tw", "gn_tw_fund"}  # 新增台灣來源一併排除
 
 
 def _make_region_page(region: str, scored_map: dict) -> str:
@@ -677,7 +642,7 @@ def _make_region_page(region: str, scored_map: dict) -> str:
     # 東南亞：排除台灣/中國來源的文章
     if region == "東南亞":
         all_docs = [d for d in all_docs
-                    if d.get("sourceId", "") not in _SEA_EXCLUDE_SOURCES]
+                    if d.get("sourceId", "") not in SEA_EXCLUDE_SOURCES]
 
     group_fit   = lambda d: d.get("groupFitScore") or d.get("hotaiFitScore") or 0
     has_funding = lambda d: bool(d.get("stage") or d.get("fundingAmountRaw"))
@@ -919,7 +884,7 @@ def render_html(tab_name: str, rows: list[dict], stats: dict,
 
     summary = _make_summary_page(tab_name, stats, hotai_docs, today)
     pages   = [summary]
-    for region in _REGION_ORDER:
+    for region in REGION_ORDER:
         pages.append(_make_region_page(region, scored_map))
     pages.append(_make_scoring_legend())
 

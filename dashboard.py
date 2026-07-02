@@ -12,29 +12,10 @@ import json
 import logging
 import datetime
 from firebase_client import get_db
-from config import FIT_KEYWORDS
+from config import TAG_LABELS
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
-
-# 和泰13大業務版圖標籤的中文顯示名稱（key 需與 config.FIT_KEYWORDS 一致）
-TAG_LABELS = {
-    "AutoRetail":        "汽車經銷",
-    "CommercialVehicle": "商用車",
-    "EV_Charging":       "充電/能源",
-    "AutoFinance":       "汽車金融",
-    "CarRental_Fleet":   "租車",
-    "AutoProduct":       "車用產品",
-    "VehicleBody":       "車體",
-    "InsurTech":         "產險",
-    "IndustrialRobot":   "產機/倉儲/機器人",
-    "MaaS_Mobility":     "MaaS/移動服務",
-    "HVAC_Energy":       "空調",
-    "AI_DataPlatform":   "AI/數位平台",
-}
-assert set(TAG_LABELS) == set(FIT_KEYWORDS), (
-    "TAG_LABELS 和 config.FIT_KEYWORDS 的分類不一致，請同步更新兩邊"
-)
 
 
 def load_all_startups() -> list[dict]:
