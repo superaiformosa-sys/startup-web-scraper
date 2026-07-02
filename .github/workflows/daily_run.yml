@@ -1,8 +1,8 @@
-name: Daily Startup Scraper
+name: Weekly Startup Scraper
 
 on:
   schedule:
-    - cron: "0 1 * * *"   # 每天 UTC 01:00 = 台灣時間 09:00
+    - cron: "0 1 * * 5"   # 每週五 UTC 01:00 = 台灣時間 09:00
   workflow_dispatch:       # 手動觸發
 
 jobs:

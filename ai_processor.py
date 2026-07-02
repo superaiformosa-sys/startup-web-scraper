@@ -889,12 +889,12 @@ def _persist_startup(item: dict, result: dict, ws, col_ref: str, region: str) ->
 
 BATCH_SIZE = 10  # Stage 1 每批多少篇（保留供參考，已不在主流程中使用）
 
-def process_raw_articles_by_region(region: str, tab_name: str) -> dict:
+def process_raw_articles_by_region(region: str, tab_name: str, limit: int | None = None) -> dict:
     ws = get_sheet(tab_name)
     rows = ws.get_all_values()
     if len(rows) <= 1:
         logger.info("No articles in %s", tab_name)
-        return {"saved": 0, "remaining": 0}
+        return {"saved": 0, "remaining": 0, "processed": 0}
 
     unprocessed = []
     for i, row in enumerate(rows[1:], start=2):
@@ -905,9 +905,40 @@ def process_raw_articles_by_region(region: str, tab_name: str) -> dict:
 
     logger.info("process [%s]: %d unprocessed", region, len(unprocessed))
     if not unprocessed:
-        return {"saved": 0, "remaining": 0}
+        return {"saved": 0, "remaining": 0, "processed": 0}
 
-    region_limit = 30 if region == "台灣" else MAX_GEMINI_PER_RUN
+    # ── 指紋去重：同一輪次+同一金額的文章多半是同一則融資被不同來源報導 ──
+    # 在切 batch（週上限）之前先做，避免重複文章吃掉寶貴的處理額度。
+    # 風險：不同公司剛好同週同輪次同金額會被誤判為重複而略過（機率低，可接受）。
+    seen_fingerprints: dict[tuple, int] = {}
+    fingerprint_dup_rows: list[int] = []
+    deduped_unprocessed = []
+    for item in unprocessed:
+        row_data = item["data"]
+        title_raw = row_data[1] if len(row_data) > 1 else ""
+        title, _ = parse_content_field(row_data[2] if len(row_data) > 2 else "")
+        if not title:
+            title = title_raw
+        amount, stage = extract_funding_from_title(title)
+        amount_usd = normalize_funding(amount) if amount else 0
+        fp = (stage, amount_usd) if (stage and amount_usd) else None
+        if fp and fp in seen_fingerprints:
+            fingerprint_dup_rows.append(item["row"])
+            logger.info("   🔁 Fingerprint dup of row %d (%s, $%s): %s",
+                        seen_fingerprints[fp], stage, amount_usd, title[:50])
+            continue
+        if fp:
+            seen_fingerprints[fp] = item["row"]
+        deduped_unprocessed.append(item)
+    if fingerprint_dup_rows:
+        ws.batch_update([
+            {"range": f"G{r}", "values": [["true"]]} for r in fingerprint_dup_rows
+        ])
+        logger.info("   🔁 Fingerprint-deduped %d articles [%s] — skipped Qwen", len(fingerprint_dup_rows), region)
+        time.sleep(1)
+    unprocessed = deduped_unprocessed
+
+    region_limit = limit if limit is not None else (30 if region == "台灣" else MAX_GEMINI_PER_RUN)
     batch = unprocessed[:region_limit]
     col_ref = collection_for_tab(tab_name)  # Bug1 fix: derive from tab_name, not today's date
 
@@ -1070,4 +1101,4 @@ def process_raw_articles_by_region(region: str, tab_name: str) -> dict:
                 region, saved, skipped, errors, remaining)
     if errors:
         logger.error("⚠️  %d rows marked 'error' in [%s] — review and retry manually", errors, region)
-    return {"saved": saved, "remaining": remaining, "errors": errors}
+    return {"saved": saved, "remaining": remaining, "errors": errors, "processed": len(batch)}

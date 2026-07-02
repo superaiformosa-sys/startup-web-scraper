@@ -65,6 +65,12 @@ def warm_up_ollama_model(timeout: int = 280) -> None:
 
 REGIONS = ["台灣", "中國", "東南亞", "全球"]
 
+# 這兩區單次 process_raw_articles_by_region 呼叫的預設上限（台灣30/中國20，見 ai_processor.py）
+# 是為「每天都有機會被下一次執行撿回來重跑」設計的。改成週爬蟲後，一週只有一個 sheet
+# tab，沒處理完的文章不會再被撿回來，所以把上限拉高到週用量（50篇），一次呼叫處理完。
+LOOPED_REGIONS    = ("台灣", "中國")
+REGION_WEEKLY_CAP = 50   # 每區這次執行最多處理幾篇，避免無上限拖垮 Ollama
+
 def step1_scrape(tab_name=None):
     start = datetime.datetime.now()
     logger.info("Step1 START: %s", start.isoformat())
@@ -86,10 +92,22 @@ def step2_ai(tab_name=None):
     failed_regions = []
     for region in REGIONS:
         try:
-            logger.info("Processing region: %s", region)
-            result = process_raw_articles_by_region(region, tab_name)
-            total_saved  += result.get("saved", 0)
-            total_errors += result.get("errors", 0)
+            if region in LOOPED_REGIONS:
+                logger.info("Processing region: %s (weekly cap=%d)", region, REGION_WEEKLY_CAP)
+                result = process_raw_articles_by_region(region, tab_name, limit=REGION_WEEKLY_CAP)
+                total_saved  += result.get("saved", 0)
+                total_errors += result.get("errors", 0)
+                if result.get("remaining", 0) > 0:
+                    logger.warning(
+                        "⚠️  [%s] weekly cap (%d) reached — %d articles left unprocessed this run "
+                        "(will NOT be retried — next week's tab starts fresh)",
+                        region, REGION_WEEKLY_CAP, result["remaining"],
+                    )
+            else:
+                logger.info("Processing region: %s", region)
+                result = process_raw_articles_by_region(region, tab_name)
+                total_saved  += result.get("saved", 0)
+                total_errors += result.get("errors", 0)
         except Exception as e:
             logger.error("region %s FAILED: %s", region, e)
             failed_regions.append(region)
@@ -139,6 +157,22 @@ def step3_report(tab_name: str | None = None, send_email: bool = False):
     logger.info("Step3 DONE: %.1fs", duration)
 
 
+def step4_dashboard(out_path: str = "dashboard.html"):
+    start = datetime.datetime.now()
+    logger.info("Step4 START (dashboard)")
+    from dashboard import load_all_startups, render_dashboard
+    records = load_all_startups()
+    if not records:
+        logger.warning("Step4: no startup records in Firebase — skipping dashboard regen")
+        return
+    html = render_dashboard(records)
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write(html)
+    duration = (datetime.datetime.now() - start).total_seconds()
+    logger.info("Step4 DONE: %.1fs | %s (%d records) — commit & push to publish",
+                duration, out_path, len(records))
+
+
 def daily_run(send_email: bool = True):
     start = datetime.datetime.now()
     logger.info("dailyRun START: %s", start.isoformat())
@@ -146,6 +180,7 @@ def daily_run(send_email: bool = True):
     logger.info("--- Step 1 done, tab: %s ---", tab_name)
     step2_ai(tab_name)
     step3_report(tab_name, send_email=send_email)
+    step4_dashboard()
     duration = (datetime.datetime.now() - start).total_seconds()
     logger.info("dailyRun DONE: %.1fs", duration)
 
@@ -158,5 +193,7 @@ if __name__ == "__main__":
         step2_ai(tab)
     elif mode == "--step3":
         step3_report(tab, send_email="--email" in sys.argv)
+    elif mode == "--step4":
+        step4_dashboard()
     else:
         daily_run(send_email="--email" in sys.argv)
