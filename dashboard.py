@@ -121,6 +121,16 @@ header.page-header .sub { color: var(--text-secondary); font-size: 0.85rem; }
 }
 .custom-range { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--muted); }
 
+/* Tabs */
+.tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.tab {
+  padding: 10px 4px; margin-right: 20px; font-size: 0.88rem; font-weight: 600; color: var(--muted);
+  cursor: pointer; user-select: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.tab:hover { color: var(--text-primary); }
+.tab.active { color: var(--series-1); border-bottom-color: var(--series-1); }
+.tab-panel { }
+
 /* KPI tiles */
 .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
 .kpi-tile {
@@ -215,21 +225,30 @@ footer { text-align: center; color: var(--muted); font-size: 0.75rem; margin-top
     </div>
   </div>
 
-  <div class="kpi-row" id="kpiRow"></div>
-
-  <div class="chart-grid">
-    <div class="chart-card"><h3>地區分佈</h3><div id="chartRegion"></div></div>
-    <div class="chart-card"><h3>和泰事業體標籤分佈</h3><div id="chartTag"></div></div>
-    <div class="chart-card"><h3>產業分佈</h3><div id="chartIndustry"></div></div>
-    <div class="chart-card"><h3>融資輪次分佈</h3><div id="chartStage"></div></div>
+  <div class="tab-bar">
+    <span class="tab active" data-tab="overview">總覽</span>
+    <span class="tab" data-tab="fullList">完整列表</span>
   </div>
 
-  <div class="section-title" id="summaryTitle">本週焦點摘要 Top 10（依集團適配度排序）</div>
-  <div class="card-list" id="summaryList"></div>
+  <div class="tab-panel" id="tabOverview">
+    <div class="kpi-row" id="kpiRow"></div>
 
-  <div class="section-title" id="listTitle" style="margin-top:24px;">完整文章列表（依集團適配度排序）</div>
-  <div class="list-meta" id="listMeta"></div>
-  <div class="card-list" id="cardList"></div>
+    <div class="chart-grid">
+      <div class="chart-card"><h3>地區分佈</h3><div id="chartRegion"></div></div>
+      <div class="chart-card"><h3>和泰事業體標籤分佈</h3><div id="chartTag"></div></div>
+      <div class="chart-card"><h3>產業分佈</h3><div id="chartIndustry"></div></div>
+      <div class="chart-card"><h3>融資輪次分佈</h3><div id="chartStage"></div></div>
+    </div>
+
+    <div class="section-title" id="summaryTitle">本週焦點摘要 Top 10（依集團適配度排序）</div>
+    <div class="card-list" id="summaryList"></div>
+  </div>
+
+  <div class="tab-panel" id="tabFullList" style="display:none;">
+    <div class="section-title" id="listTitle">完整文章列表（依集團適配度排序）</div>
+    <div class="list-meta" id="listMeta"></div>
+    <div class="card-list" id="cardList"></div>
+  </div>
 
   <footer>
     本頁為靜態頁面，資料截至產生當下。如需更新，請重新執行 <code>python dashboard.py</code>。
@@ -312,6 +331,18 @@ function buildRegionChips(containerId, items) {
   }
   refreshRegionChips();
 }
+
+const TAB_PANELS = { overview: "tabOverview", fullList: "tabFullList" };
+document.querySelectorAll(".tab-bar .tab").forEach(tabEl => {
+  tabEl.addEventListener("click", () => {
+    document.querySelectorAll(".tab-bar .tab").forEach(t => t.classList.remove("active"));
+    tabEl.classList.add("active");
+    const target = tabEl.dataset.tab;
+    Object.entries(TAB_PANELS).forEach(([key, panelId]) => {
+      document.getElementById(panelId).style.display = key === target ? "" : "none";
+    });
+  });
+});
 
 const SORT_LABELS = { groupFit: "集團適配度", startupScore: "新創推薦度" };
 document.querySelectorAll(".filters [data-sort]").forEach(btn => {
