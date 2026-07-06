@@ -242,10 +242,19 @@ _PLACEHOLDER_NAMES = {
     "<actual company name>", "actual company name",
 }
 
+# Hotai itself (the client doing the evaluating) — not a startup, must never be the extracted company.
+_HOTAI_SELF_NAMES = {
+    "和泰集團", "和泰汽車", "和泰", "hotai group", "hotai motor", "hotai",
+}
+
 def _is_valid_company_name(name: str) -> bool:
     if not name or len(name.strip()) < 2:
         return False
     return name.strip().lower() not in _PLACEHOLDER_NAMES
+
+
+def _is_hotai_self_reference(*names: str) -> bool:
+    return any(n and n.strip().lower() in _HOTAI_SELF_NAMES for n in names)
 
 
 _HOTAI_CONTEXT = (
@@ -291,7 +300,10 @@ def build_extract_prompt(title: str, summary: str, url: str, prefilled: dict) ->
         f"{hint_text}"
         f"{lang_instr}"
         "Extract the main company from this startup/tech article. Output JSON only (no markdown, no explanation).\n"
-        "If you cannot identify a specific real company name, output: {}\n\n"
+        "If you cannot identify a specific real company name, output: {}\n"
+        "Never output Hotai (和泰集團/Hotai Group) as the company — Hotai is the client evaluating fit, "
+        "not a startup being reported on. If the article lists multiple startups with no single clear "
+        "primary subject (e.g. a roundup/listicle), output: {}\n\n"
         "Example output:\n"
         '{"companyName":"未來式智能","companyNameEn":"MindOS",'
         f'"description":"{desc_ex}",'
@@ -343,7 +355,10 @@ def build_classify_and_extract_prompt(title: str, summary: str, prefilled: dict)
         "INCLUDE: company funding, product launches, founder profiles, acquisitions, accelerator news.\n"
         "EXCLUDE: stock market data, government policy, macroeconomics, large public corps with no startup angle.\n\n"
         'If NOT a startup → output ONLY: {"isStartup":false}\n'
-        "If you cannot identify a specific real company name → output ONLY: {\"isStartup\":false}\n\n"
+        "If you cannot identify a specific real company name → output ONLY: {\"isStartup\":false}\n"
+        "Never output Hotai (和泰集團/Hotai Group) as the company — Hotai is the client evaluating fit, "
+        "not a startup being reported on. If the article lists multiple startups with no single clear "
+        "primary subject (e.g. a roundup/listicle) → output ONLY: {\"isStartup\":false}\n\n"
         "If IS a startup → extract the main company. Output JSON only (no markdown, no explanation).\n"
         "Example output:\n"
         '{"isStartup":true,"companyName":"未來式智能","companyNameEn":"MindOS",'
@@ -757,10 +772,18 @@ def _persist_startup(item: dict, result: dict, ws, col_ref: str, region: str) ->
         ws.update_cell(item["row"], 7, "skipped")
         return "skipped"
 
-    company = result.get("companyName", "")
+    company    = result.get("companyName", "")
+    company_en = result.get("companyNameEn", "")
     if not _is_valid_company_name(company):
         reason = f"placeholder name: '{company}'" if company else "no companyName"
         logger.info("   ⚠️  Skip: %s", reason)
+        ws.update_cell(item["row"], 7, "skipped")
+        return "skipped"
+    if _is_hotai_self_reference(company, company_en):
+        logger.info(
+            "   ⚠️  Skip: extracted Hotai itself (self-reference), not a startup — '%s' / '%s'",
+            company, company_en,
+        )
         ws.update_cell(item["row"], 7, "skipped")
         return "skipped"
 
