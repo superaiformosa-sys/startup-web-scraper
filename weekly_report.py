@@ -111,10 +111,17 @@ def load_scored_map(collection: str) -> dict:
         db     = get_db()
         result = {}
         today  = _dt.date.today()
-        # Scan Firebase collections from this week's Sunday to today (Sun-Sat week)
+        # Scan Firebase collections from this week's Sunday to today (Sun-Sat week),
+        # plus always the specific collection being reported on — the week window alone
+        # misses it whenever the report is (re)generated outside the batch's own week
+        # (e.g. a Friday batch resent the following Monday).
         days_since_sunday = (today.weekday() + 1) % 7
-        for delta in range(days_since_sunday + 1):
-            col_name = "startups_" + (today - _dt.timedelta(days=delta)).isoformat()
+        col_names = {
+            "startups_" + (today - _dt.timedelta(days=delta)).isoformat()
+            for delta in range(days_since_sunday + 1)
+        }
+        col_names.add(collection)
+        for col_name in col_names:
             try:
                 for doc in db.collection(col_name).stream():
                     d = doc.to_dict()
