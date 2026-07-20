@@ -5,7 +5,7 @@ import datetime
 import subprocess
 import requests
 from scraper import run_all_scrapers
-from ai_processor import process_raw_articles_by_region, OLLAMA_MODEL
+from ai_processor import process_raw_articles_by_region, OLLAMA_MODEL, get_sheet
 from weekly_report import load_all_tabs, analyze_rows, render_html
 from email_sender import send_weekly_report
 from config import OLLAMA_BASE_URL as OLLAMA_URL, REGIONS, LOOPED_REGIONS, REGION_WEEKLY_CAP
@@ -73,10 +73,12 @@ def step1_scrape(tab_name=None):
 def step2_ai(tab_name=None):
     start = datetime.datetime.now()
     logger.info("Step2 START (AI+Firebase)")
-    if not ensure_ollama_running():
-        logger.error("Step2 ABORT — Ollama could not be started")
-        return
-    warm_up_ollama_model()
+    # Ollama/Qwen 只是 Gemini 額度用完時的本機備援，不是前提條件 —— GitHub Actions
+    # 這種沒裝 Ollama 的環境也該能單靠 Gemini 跑完整個 Step2，而不是直接放棄。
+    if ensure_ollama_running():
+        warm_up_ollama_model()
+    else:
+        logger.warning("Ollama unavailable — proceeding with Gemini only this run (no local fallback)")
     if tab_name is None:
         tab_name = "raw_" + datetime.datetime.now().strftime("%Y-%m-%d")
     total_saved = total_errors = 0
@@ -164,12 +166,42 @@ def step4_dashboard(out_path: str = "dashboard.html"):
                 duration, out_path, len(records))
 
 
+def _has_unprocessed(tab_name: str) -> bool:
+    ws = get_sheet(tab_name)
+    rows = ws.get_all_values()
+    return any(len(r) <= 6 or r[6].strip().lower() in ("false", "") for r in rows[1:])
+
+
+# Gemini 額度用完的旗標 (_gemini_exhausted，見 ai_processor.py) 是 process 內的全域變數，
+# 一旦 429 過一次，同一個 process 裡後面全部改用 Qwen —— 這在本機沒差（Qwen 一直都在），
+# 但 CI 環境沒有 Ollama，同一個 process 裡重試沒有意義。額度通常幾分鐘內會回補，所以
+# 用「開一個全新 process」的方式重試，讓 Gemini 額度旗標重置，而不是在原 process 裡空轉。
+STEP2_MAX_ATTEMPTS = 6
+STEP2_RETRY_WAIT_S = 90
+
 def daily_run(send_email: bool = True):
     start = datetime.datetime.now()
     logger.info("dailyRun START: %s", start.isoformat())
     tab_name = step1_scrape()
     logger.info("--- Step 1 done, tab: %s ---", tab_name)
-    step2_ai(tab_name)
+
+    for attempt in range(1, STEP2_MAX_ATTEMPTS + 1):
+        if attempt == 1:
+            step2_ai(tab_name)
+        else:
+            logger.warning("Step2 attempt %d/%d: rows still unprocessed (likely Gemini quota) — "
+                           "retrying in a fresh process so the quota flag resets",
+                           attempt, STEP2_MAX_ATTEMPTS)
+            subprocess.run([sys.executable, __file__, "--step2", tab_name], check=False)
+        if not _has_unprocessed(tab_name):
+            logger.info("Step2: all rows processed after %d attempt(s)", attempt)
+            break
+        if attempt < STEP2_MAX_ATTEMPTS:
+            time.sleep(STEP2_RETRY_WAIT_S)
+    else:
+        logger.warning("Step2: exhausted %d attempts — some rows may remain unprocessed this week",
+                       STEP2_MAX_ATTEMPTS)
+
     step3_report(tab_name, send_email=send_email)
     step4_dashboard()
     duration = (datetime.datetime.now() - start).total_seconds()
