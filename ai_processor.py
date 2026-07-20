@@ -9,7 +9,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from config import (
     CEREBRAS_API_KEY, CEREBRAS_ENDPOINT, CEREBRAS_MODEL, CEREBRAS_REASONING_EFFORT,
-    GEMINI_API_KEY, GEMINI_ENDPOINT, MAX_GEMINI_PER_RUN,
+    GEMINI_API_KEY, GEMINI_ENDPOINT, MAX_GEMINI_PER_RUN, LLM_QUOTA_COOLDOWN_S,
     SHEETS_ID, GOOGLE_CREDENTIALS_JSON, FIT_KEYWORDS, FX,
     OLLAMA_BASE_URL, OLLAMA_MODEL, TAIWAN_DOMAINS, HOTAI_MIN_FIT_SCORE,
     RULE_SKIP_TITLE, STRONG_FUNDING_KW, STRONG_STARTUP_KW,
@@ -515,11 +515,11 @@ def parse_response(text: str) -> dict | None:
 # ── Cerebras → Gemini → Qwen（依序嘗試，前面額度用完/出錯才會往後 fallback） ──
 
 class CerebrasQuotaExceeded(Exception):
-    """Cerebras quota/rate limit exhausted (HTTP 429) — stop trying Cerebras for the rest of this run."""
+    """Cerebras quota/rate limit exhausted (HTTP 429) — cool down before trying Cerebras again."""
 
 
 class GeminiQuotaExceeded(Exception):
-    """Gemini free-tier quota exhausted (HTTP 429) — stop trying Gemini for the rest of this run."""
+    """Gemini free-tier quota exhausted (HTTP 429) — cool down before trying Gemini again."""
 
 
 def call_cerebras(prompt: str) -> dict | None:
@@ -560,33 +560,36 @@ def call_gemini(prompt: str) -> dict | None:
     return parse_response(raw)
 
 
-_cerebras_exhausted = False  # set True for the rest of this process once quota runs out
-_gemini_exhausted = False    # set True for the rest of this process once quota runs out
-_last_llm_used = ""          # "cerebras" / "gemini" / "qwen" — which provider produced the most recent result
+_cerebras_cooldown_until = 0.0  # time.time() timestamp; Cerebras skipped until this passes
+_gemini_cooldown_until = 0.0    # time.time() timestamp; Gemini skipped until this passes
+_last_llm_used = ""             # "cerebras" / "gemini" / "qwen" — which provider produced the most recent result
 
 
 def call_llm_with_retry(prompt: str, max_retries: int = 3) -> dict | None:
-    """Try Cerebras first (fastest), then Gemini; once both clouds' quotas are
-    exhausted for the day, fall back to local Qwen for the remainder of this run."""
-    global _cerebras_exhausted, _gemini_exhausted, _last_llm_used
+    """Try Cerebras first (fastest), then Gemini; fall back to local Qwen while both
+    are in cooldown. A 429 puts that provider on a short cooldown (LLM_QUOTA_COOLDOWN_S)
+    rather than banning it for the rest of the run — RPM/TPM-style limits reset within
+    seconds to a minute, so a long-running batch would otherwise waste hours of
+    perfectly good quota windows on a single early rate-limit hit."""
+    global _cerebras_cooldown_until, _gemini_cooldown_until, _last_llm_used
 
-    if CEREBRAS_API_KEY and not _cerebras_exhausted:
+    if CEREBRAS_API_KEY and time.time() >= _cerebras_cooldown_until:
         try:
             _last_llm_used = "cerebras"
             return call_cerebras(prompt)
         except CerebrasQuotaExceeded:
-            logger.warning("Cerebras quota exhausted — switching to Gemini for the rest of this run")
-            _cerebras_exhausted = True
+            _cerebras_cooldown_until = time.time() + LLM_QUOTA_COOLDOWN_S
+            logger.warning("Cerebras quota exhausted — cooling down %ds, using Gemini for now", LLM_QUOTA_COOLDOWN_S)
         except Exception as e:
             logger.warning("Cerebras error, falling back to Gemini for this call: %s", e)
 
-    if GEMINI_API_KEY and not _gemini_exhausted:
+    if GEMINI_API_KEY and time.time() >= _gemini_cooldown_until:
         try:
             _last_llm_used = "gemini"
             return call_gemini(prompt)
         except GeminiQuotaExceeded:
-            logger.warning("Gemini quota exhausted — switching to Qwen for the rest of this run")
-            _gemini_exhausted = True
+            _gemini_cooldown_until = time.time() + LLM_QUOTA_COOLDOWN_S
+            logger.warning("Gemini quota exhausted — cooling down %ds, using Qwen for now", LLM_QUOTA_COOLDOWN_S)
         except Exception as e:
             logger.warning("Gemini error, falling back to Qwen for this call: %s", e)
 

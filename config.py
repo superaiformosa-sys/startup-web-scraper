@@ -27,6 +27,12 @@ CEREBRAS_MODEL = "gpt-oss-120b"
 # and Gemini-flash-lite's non-reasoning style, for this classify/extract task.
 CEREBRAS_REASONING_EFFORT = "low"
 
+# 被 429（RPM/TPM 這類短窗限流）擋下後，等這麼多秒再讓該服務重新加入輪替——這種限制通常
+# 幾十秒到一分鐘內就重置，不是整天用完，永久關閉整個 process 剩餘時間會白白浪費掉之後
+# 一直存在的額度視窗（2026-07-20 實測：Cerebras RPM=5 被擋一次後，若永久關閉，兩小時的
+# run 會少用掉上百次原本可用的額度）。
+LLM_QUOTA_COOLDOWN_S = 65
+
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent"
 
 MAX_ARTICLES_PER_SOURCE = 30

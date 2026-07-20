@@ -178,10 +178,13 @@ def _count_error_rows(tab_name: str) -> int:
     return sum(1 for r in rows[1:] if len(r) > 6 and r[6].strip().lower() == "error")
 
 
-# Gemini 額度用完的旗標 (_gemini_exhausted，見 ai_processor.py) 是 process 內的全域變數，
-# 一旦 429 過一次，同一個 process 裡後面全部改用 Qwen —— 這在本機沒差（Qwen 一直都在），
-# 但 CI 環境沒有 Ollama，同一個 process 裡重試沒有意義。額度通常幾分鐘內會回補，所以
-# 用「開一個全新 process」的方式重試，讓 Gemini 額度旗標重置，而不是在原 process 裡空轉。
+# Cerebras/Gemini 的 429 現在只會讓該服務進入短暫冷卻（見 ai_processor.py 的
+# LLM_QUOTA_COOLDOWN_S），同一個 process 內冷卻完就會再試，不用整個重開。這裡的
+# 「開新 process 重試」是為了應付更深層的耗盡（例如真的整天額度用完）—— CI 環境沒有
+# Ollama 兜底，多等幾分鐘、開新 process 重試，還是比在原 process 裡對著已知耗盡的
+# 額度空轉更有機會撐過去。
+STEP2_MAX_ATTEMPTS = 6
+STEP2_RETRY_WAIT_S = 90
 STEP2_MAX_ATTEMPTS = 6
 STEP2_RETRY_WAIT_S = 90
 
