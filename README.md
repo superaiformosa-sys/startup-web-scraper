@@ -9,7 +9,7 @@
 一個全自動的機器人，**每週五早上 9 點（台灣時間）自己跑一次**，做四件事：
 
 1. 到全球各家新聞網站（台灣、中國、東南亞、國際）抓「新創公司拿到融資」的新聞
-2. 用 AI（Gemini / Qwen）幫每一則新聞打分數：這家新創跟和泰集團的 13 大業務有多相關、值得投資的程度多高
+2. 用 AI（Cerebras / Gemini / Qwen，依序嘗試）幫每一則新聞打分數：這家新創跟和泰集團的 13 大業務有多相關、值得投資的程度多高
 3. 把結果存進資料庫（Firebase），並產生一份週報
 4. 把週報寄到指定信箱、同時更新一個網頁版儀表板
 
@@ -22,7 +22,7 @@
 ```mermaid
 flowchart TD
     A[各新聞網站 RSS] -->|Step1: scraper.py| B[Google Sheets<br/>暫存原始新聞]
-    B -->|Step2: ai_processor.py| C{AI 評分<br/>Gemini 優先 → Qwen 備援}
+    B -->|Step2: ai_processor.py| C{AI 評分<br/>Cerebras → Gemini → Qwen}
     C --> D[Firebase<br/>存最終結果與分數]
     D -->|Step3: weekly_report.py| E[週報 HTML]
     E -->|email_sender.py| F[Email 寄出]
@@ -67,7 +67,8 @@ flowchart TD
 | **產業分類清單**（AI/SaaS/FinTech...） | `config.py` | `VALID_INDUSTRIES`、`INDUSTRY_ALIAS`（AI 常打錯字的產業名稱要對應回標準分類） |
 | **偏好的融資輪次 / 地區加分** | `config.py` | `PREFERRED_STAGES`、`PREFERRED_REGIONS`、`REGION_BONUS_*`、`STAGE_BONUS_*` |
 | **AI 模型**（要用哪個 Cerebras/Qwen 版本、Gemini 版本） | `config.py` | `CEREBRAS_MODEL`、`OLLAMA_MODEL`（本機備援模型）、`GEMINI_ENDPOINT`（網址裡的模型名稱） |
-| **LLM 呼叫順序**（目前是 Cerebras → Gemini → Qwen） | `ai_processor.py` 的 `call_llm_with_retry()` | 前面的服務沒設定 API key 或額度用完，才會往後 fallback；想改順序要動這段程式碼 |
+| **LLM 呼叫順序**（目前是 Cerebras → Gemini → Qwen） | `ai_processor.py` 的 `call_llm_with_retry()` | 前面的服務沒設定 API key、或額度用完（429）進入冷卻，才會往後 fallback；想改順序要動這段程式碼 |
+| **額度用完後多久重試該服務** | `config.py` | `LLM_QUOTA_COOLDOWN_S`（預設 65 秒）——429 之後不是整個執行過程都封殺該服務，過這麼多秒就會再讓它試一次 |
 | **每次最多處理幾篇文章（避免跑太久/太貴）** | `config.py` | `MAX_ARTICLES_PER_SOURCE`、`MAX_GEMINI_PER_RUN`、`REGION_WEEKLY_CAP` |
 | **週報收件人** | `.env` | `REPORT_RECIPIENTS`（逗號分隔多個 email） |
 | **週報顯示樣式**（每區顯示幾則、排列順序、顏色） | `config.py` | `REGION_ORDER`、`REGION_DISPLAY_MAX` / `REGION_DISPLAY_MIN`、`INDUSTRY_COLOR`、`MIN_DISPLAY_GROUP_FIT` |
@@ -116,7 +117,9 @@ python main.py --email              # 整個流程都跑一次，並寄信
 `main.py` 每次執行都會自動偵測並嘗試啟動 `ollama serve`；真的沒裝的環境（例如 GitHub Actions 雲端機器）會自動改成「只用 Cerebras/Gemini」，不會讓整個流程失敗。
 
 **Q：Cerebras 或 Gemini 額度用完了怎麼辦？**
-系統會自動偵測 429（額度用完）錯誤並依序往下 fallback：Cerebras 額度用完 → 切 Gemini；Gemini 也用完 → 切 Qwen。如果該次執行環境沒有 Qwen（例如雲端），`main.py` 會等幾分鐘後用全新流程重試（額度通常幾分鐘內恢復），最多重試 6 次；如果重試後仍有文章因為額度問題被跳過，log 會明確列出「N 篇文章因故被跳過」，不會悄悄當作全部處理完成。
+系統會自動偵測 429（額度用完/被限流）錯誤並依序往下 fallback：Cerebras 額度用完 → 切 Gemini；Gemini 也用完 → 切 Qwen。**這不是永久切掉**——該服務會進入 `LLM_QUOTA_COOLDOWN_S`（預設 65 秒）的冷卻，冷卻結束後下一次呼叫會自動再試一次，不用整個流程重跑。實測（2026-07-20）一次約 26 分鐘的完整執行裡，Cerebras 反覆冷卻、恢復，最終扛了六成以上的文章，比只用一次就整個放棄快很多。
+如果該次執行環境沒有 Qwen 兜底（例如雲端 GitHub Actions），`main.py` 還有更深一層的保護：等幾分鐘後開一個全新流程重試，最多重試 6 次，用來應付比短暫限流更嚴重的額度耗盡；如果重試後仍有文章因為額度問題被跳過，log 會明確列出「N 篇文章因故被跳過」，不會悄悄當作全部處理完成。
+每筆存進 Firebase 的資料都有 `scoredBy` 欄位（`cerebras`/`gemini`/`qwen`），記錄是哪個服務判斷的，方便之後追查分數落差是不是特定模型造成的。
 
 **Q：週報沒收到信？**
 檢查 `.env`（或 GitHub Secrets）裡的 `EMAIL_SENDER` / `EMAIL_PASSWORD` / `REPORT_RECIPIENTS` 是否有填；沒填的話系統只會把週報存成本機 HTML 檔，不會報錯，但也不會寄信。
@@ -126,3 +129,12 @@ python main.py --email              # 整個流程都跑一次，並寄信
 
 **Q：想新增一個和泰業務分類（例如新事業）？**
 在 `config.py` 的 `FIT_KEYWORDS` 裡新增一組分類與關鍵字，同時要在 `TAG_LABELS` 補上對應的中文顯示名稱（程式有 assert 檢查兩者要一致，忘記補會直接報錯提醒）。
+
+**Q：某一週的資料當初漏跑了（Sheets 裡有原始資料，但沒評分/沒週報），要怎麼補（backfill）？**
+1. 確認 Google Sheets 裡那週的分頁還在（例如 `raw_2026-06-12`）
+2. 補評分：仿照 repo 裡既有的 `_backfill_0626.py` 寫一支小腳本呼叫 `step2_ai(tab_name="raw_2026-06-12")`（來自 `main.py`），把該週未處理的文章送進 Cerebras/Gemini/Qwen 評分、寫進 Firebase
+3. 補週報：呼叫 `step3_report(tab_name="raw_2026-06-12", send_email=True)` 產生並寄出那一週的報告——**注意 `tab_name` 一定要帶對**，週報的檔名跟信件標題都是照這個參數的日期命名，不是照「今天」的日期
+4. 補 dashboard：`step4_dashboard()` 會自動掃 Firebase 裡所有 `startups_*` collection，不分日期，所以只要 Step2 有把資料寫進 Firebase，下次任何一次執行到 Step4，該週資料就會自動出現在 dashboard 上，不用特別處理
+
+**Q：dashboard 網站（Vercel）打不開，顯示 404 / DEPLOYMENT_NOT_FOUND？**
+代表 Vercel 那邊的部署本身有問題（專案被刪除、改名，或沒連接這個 repo），不是 `dashboard.html` 內容的問題。到 [vercel.com](https://vercel.com) 的 dashboard 確認專案狀態與目前網址，網址變動的話要記得回來更新 `weekly_report.py` 裡footer 那兩處超連結（`_make_summary_page` 函式內)。
