@@ -141,7 +141,10 @@ def step3_report(tab_name: str | None = None, send_email: bool = False):
         if not ok:
             logger.error("Step3: email failed — report saved to local file")
     else:
-        filename = f"weekly_report_{datetime.date.today()}.html"
+        # 用 tab_name 的日期命名，不是今天的日期——不然 backfill 舊週報時檔名會跟「今天」的
+        # 報告撞名，互相覆蓋（2026-07-20 backfill 0612 週報時就撞到當天正在跑的 0720 報告）。
+        report_date = tab_name[4:] if tab_name and tab_name.startswith("raw_") else datetime.date.today()
+        filename = f"weekly_report_{report_date}.html"
         with open(filename, "w", encoding="utf-8") as f:
             f.write(html)
         logger.info("Step3: report saved to %s (use --email to send)", filename)
