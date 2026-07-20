@@ -14,10 +14,18 @@ def _require_env(name: str) -> str:
     return val
 
 
-GEMINI_API_KEY          = os.environ.get("GEMINI_API_KEY", "")   # optional: Gemini fallback LLM
+CEREBRAS_API_KEY        = os.environ.get("CEREBRAS_API_KEY", "")  # optional: Cerebras — tried first (fastest)
+GEMINI_API_KEY          = os.environ.get("GEMINI_API_KEY", "")   # optional: Gemini — tried after Cerebras
 FIREBASE_PROJECT_ID     = _require_env("FIREBASE_PROJECT_ID")
 SHEETS_ID               = _require_env("SHEETS_ID")
 GOOGLE_CREDENTIALS_JSON = _require_env("GOOGLE_CREDENTIALS_JSON")
+
+CEREBRAS_ENDPOINT = "https://api.cerebras.ai/v1/chat/completions"
+CEREBRAS_MODEL = "gpt-oss-120b"
+# gpt-oss-120b defaults to "medium" reasoning (burns output tokens on chain-of-thought
+# before the JSON answer) — "low" keeps it fast and consistent with Qwen's think:false
+# and Gemini-flash-lite's non-reasoning style, for this classify/extract task.
+CEREBRAS_REASONING_EFFORT = "low"
 
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent"
 

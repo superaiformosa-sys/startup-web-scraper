@@ -8,6 +8,7 @@ import requests
 import gspread
 from google.oauth2.service_account import Credentials
 from config import (
+    CEREBRAS_API_KEY, CEREBRAS_ENDPOINT, CEREBRAS_MODEL, CEREBRAS_REASONING_EFFORT,
     GEMINI_API_KEY, GEMINI_ENDPOINT, MAX_GEMINI_PER_RUN,
     SHEETS_ID, GOOGLE_CREDENTIALS_JSON, FIT_KEYWORDS, FX,
     OLLAMA_BASE_URL, OLLAMA_MODEL, TAIWAN_DOMAINS, HOTAI_MIN_FIT_SCORE,
@@ -511,10 +512,35 @@ def parse_response(text: str) -> dict | None:
     return None
 
 
-# ── Gemini（主力，額度用完後 fallback 回 Qwen） ──
+# ── Cerebras → Gemini → Qwen（依序嘗試，前面額度用完/出錯才會往後 fallback） ──
+
+class CerebrasQuotaExceeded(Exception):
+    """Cerebras quota/rate limit exhausted (HTTP 429) — stop trying Cerebras for the rest of this run."""
+
 
 class GeminiQuotaExceeded(Exception):
     """Gemini free-tier quota exhausted (HTTP 429) — stop trying Gemini for the rest of this run."""
+
+
+def call_cerebras(prompt: str) -> dict | None:
+    payload = {
+        "model": CEREBRAS_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.1,
+        "max_tokens": 600,
+        "reasoning_effort": CEREBRAS_REASONING_EFFORT,
+    }
+    headers = {"Authorization": f"Bearer {CEREBRAS_API_KEY}"}
+    resp = requests.post(CEREBRAS_ENDPOINT, json=payload, headers=headers, timeout=30)
+    if resp.status_code == 429:
+        raise CerebrasQuotaExceeded(resp.text[:200])
+    if resp.status_code != 200:
+        raise RuntimeError(f"Cerebras {resp.status_code}: {resp.text[:150]}")
+    try:
+        raw = resp.json()["choices"][0]["message"]["content"]
+    except (KeyError, IndexError):
+        return None
+    return parse_response(raw)
 
 
 def call_gemini(prompt: str) -> dict | None:
@@ -534,21 +560,37 @@ def call_gemini(prompt: str) -> dict | None:
     return parse_response(raw)
 
 
-_gemini_exhausted = False  # set True for the rest of this process once quota runs out
+_cerebras_exhausted = False  # set True for the rest of this process once quota runs out
+_gemini_exhausted = False    # set True for the rest of this process once quota runs out
+_last_llm_used = ""          # "cerebras" / "gemini" / "qwen" — which provider produced the most recent result
 
 
 def call_llm_with_retry(prompt: str, max_retries: int = 3) -> dict | None:
-    """Try Gemini first (fast, offloads the slow local Qwen); once its quota is
-    exhausted for the day, fall back to Qwen for the remainder of this run."""
-    global _gemini_exhausted
+    """Try Cerebras first (fastest), then Gemini; once both clouds' quotas are
+    exhausted for the day, fall back to local Qwen for the remainder of this run."""
+    global _cerebras_exhausted, _gemini_exhausted, _last_llm_used
+
+    if CEREBRAS_API_KEY and not _cerebras_exhausted:
+        try:
+            _last_llm_used = "cerebras"
+            return call_cerebras(prompt)
+        except CerebrasQuotaExceeded:
+            logger.warning("Cerebras quota exhausted — switching to Gemini for the rest of this run")
+            _cerebras_exhausted = True
+        except Exception as e:
+            logger.warning("Cerebras error, falling back to Gemini for this call: %s", e)
+
     if GEMINI_API_KEY and not _gemini_exhausted:
         try:
+            _last_llm_used = "gemini"
             return call_gemini(prompt)
         except GeminiQuotaExceeded:
             logger.warning("Gemini quota exhausted — switching to Qwen for the rest of this run")
             _gemini_exhausted = True
         except Exception as e:
             logger.warning("Gemini error, falling back to Qwen for this call: %s", e)
+
+    _last_llm_used = "qwen"
     return _call_ollama_with_retry(prompt, max_retries=max_retries)
 
 
@@ -813,6 +855,9 @@ def _persist_startup(item: dict, result: dict, ws, col_ref: str, region: str) ->
     result["sourceId"]         = source
     result["sourceUrl"]        = url
     result["newsTitle"]        = item.get("title", "")   # 原始新聞標題（供 HTML 報告顯示）
+    # scoredBy（哪個 LLM 產生這筆判斷）由呼叫端在拿到 result 當下設定，這裡不能重設——
+    # 到這裡時 _last_llm_used 這個全域變數可能已經被後面其他文章的呼叫蓋掉了
+    result.setdefault("scoredBy", "")
     result["extractedAt"]      = datetime.now(timezone.utc).isoformat()
     result["status"]           = "new"
     result["fundingAmountUSD"] = normalize_funding(result.get("fundingAmountRaw", ""))
@@ -1000,6 +1045,7 @@ def process_raw_articles_by_region(region: str, tab_name: str, limit: int | None
                     rejected_rows_s1.append(item["row"])
                     logger.info("    ✗ not startup")
                 else:
+                    result["scoredBy"] = _last_llm_used  # capture now — stale by the time it's persisted later
                     stage1_2_accepted.append((item, result))
                     logger.info("    ✓ %s", result.get("companyName", "?")[:40])
             except Exception as e:
@@ -1034,12 +1080,15 @@ def process_raw_articles_by_region(region: str, tab_name: str, limit: int | None
             result = call_llm_with_retry(prompt)
 
             if result is None:
-                logger.warning("   ⚠️  Ollama parse failure for: %s", item["title"][:60])
-                ws.update_cell(item["row"], 7, "error")
+                # LLM unavailable (e.g. Gemini quota exhausted + no Ollama fallback in CI) —
+                # leave unprocessed (don't mark "error") so the next retry attempt picks it up,
+                # same as the Stage1+2 ambiguous path above.
+                logger.error("   ❌ LLM unavailable, skipping row %d (will retry next run)", item["row"])
                 errors += 1
                 time.sleep(2)
                 continue
 
+            result["scoredBy"] = _last_llm_used
             outcome = _persist_startup(item, result, ws, col_ref, region)
             if outcome == "saved":
                 saved += 1

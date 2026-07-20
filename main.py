@@ -172,6 +172,12 @@ def _has_unprocessed(tab_name: str) -> bool:
     return any(len(r) <= 6 or r[6].strip().lower() in ("false", "") for r in rows[1:])
 
 
+def _count_error_rows(tab_name: str) -> int:
+    ws = get_sheet(tab_name)
+    rows = ws.get_all_values()
+    return sum(1 for r in rows[1:] if len(r) > 6 and r[6].strip().lower() == "error")
+
+
 # Gemini 額度用完的旗標 (_gemini_exhausted，見 ai_processor.py) 是 process 內的全域變數，
 # 一旦 429 過一次，同一個 process 裡後面全部改用 Qwen —— 這在本機沒差（Qwen 一直都在），
 # 但 CI 環境沒有 Ollama，同一個 process 裡重試沒有意義。額度通常幾分鐘內會回補，所以
@@ -201,6 +207,14 @@ def daily_run(send_email: bool = True):
     else:
         logger.warning("Step2: exhausted %d attempts — some rows may remain unprocessed this week",
                        STEP2_MAX_ATTEMPTS)
+
+    error_count = _count_error_rows(tab_name)
+    if error_count:
+        logger.error(
+            "⚠️  Step2: %d article(s) marked 'error' this week (tab: %s) — "
+            "skipped, NOT scored, NOT saved to Firebase. Needs manual review/rerun.",
+            error_count, tab_name,
+        )
 
     step3_report(tab_name, send_email=send_email)
     step4_dashboard()

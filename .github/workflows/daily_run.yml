@@ -28,6 +28,7 @@ jobs:
 
       - name: Run full pipeline (scrape → AI score → report → email → dashboard)
         env:
+          CEREBRAS_API_KEY:         ${{ secrets.CEREBRAS_API_KEY }}
           GEMINI_API_KEY:           ${{ secrets.GEMINI_API_KEY }}
           FIREBASE_PROJECT_ID:      ${{ secrets.FIREBASE_PROJECT_ID }}
           SHEETS_ID:                ${{ secrets.SHEETS_ID }}
@@ -37,7 +38,7 @@ jobs:
           REPORT_RECIPIENTS:        ${{ secrets.REPORT_RECIPIENTS }}
         run: python main.py all --email
         # 沒裝 Ollama，所以本機 Qwen 備援用不到——main.py 會偵測到 Ollama 不在，
-        # 自動改成只靠 Gemini 跑完，遇到額度用完會自動重試（開新 process 讓額度旗標重置）。
+        # 自動改成只靠 Cerebras/Gemini 跑完，遇到額度用完會自動重試（開新 process 讓額度旗標重置）。
 
       - name: Commit and push weekly artifacts
         run: |
