@@ -1,0 +1,52 @@
+main.py 說明
+============
+
+main.py 是整個新創投資情報 pipeline 的「總指揮」，負責依序執行四個步驟：
+爬新聞 → AI 分析評分 → 產生週報 → 產生儀表板。
+
+執行方式
+--------
+python3 main.py              → 跑完整流程（Step1~4），週報只存成本地 html，不寄信
+python3 main.py --email      → 跑完整流程，並把週報寄出（Email）
+python3 main.py --step1      → 只跑「爬蟲」
+python3 main.py --step2 <tab_name>  → 只跑「AI 分析評分」，指定某一週的分頁
+python3 main.py --step3 <tab_name> [--email]  → 只跑「產生週報」
+python3 main.py --step4      → 只跑「產生儀表板」
+
+四個步驟在做什麼
+----------------
+
+Step1 — 爬蟲 (step1_scrape)
+  呼叫 scraper.py 的 run_all_scrapers()，抓取各地區（中國、東南亞…）的
+  新創投資新聞，寫進 Google Sheets 的新分頁（分頁名如 raw_2026-07-21）。
+
+Step2 — AI 分析評分 (step2_ai)
+  1. 先確認本機 Ollama（跑 Qwen 模型）有沒有啟動，沒有就自動嘗試啟動；
+     啟動失敗也不會中止，因為主要判斷靠 Gemini/Cerebras 這些雲端 LLM，
+     Ollama/Qwen 只是它們額度用完時的本機備援。
+  2. 依序處理每個地區（REGIONS），呼叫 ai_processor.py 的
+     process_raw_articles_by_region()：用 LLM 判斷「是不是新創」「公司名稱／
+     融資輪次」等欄位，算出 fit score，寫回 Firebase。
+  3. 部分地區有「每週處理上限」(LOOPED_REGIONS + REGION_WEEKLY_CAP)，超過上限
+     的文章這週不會再重試，下週新分頁才會重新開始。
+  4. 如果雲端 LLM 額度在同一個 process 內用完，daily_run() 會用新的 process
+     重跑 Step2（最多 6 次、每次間隔 90 秒），因為新 process 才能重置額度旗標。
+
+Step3 — 產生週報 (step3_report)
+  從 Firebase 讀取所有已評分的資料，統計整理（analyze_rows），套版產生 HTML
+  週報（render_html）。報告日期用「該週分頁的日期」而非「今天」，避免補跑舊
+  週報時檔名/信件標題跟當天報告撞名。
+  --email 有給的話會透過 email_sender.py 寄出；沒給的話只存成本地檔案
+  weekly_report_<date>.html。
+
+Step4 — 產生儀表板 (step4_dashboard)
+  從 Firebase 讀出所有新創紀錄，產生 dashboard.html。這個檔案產生後還需要
+  手動 commit + push 才會更新到公開的 Vercel 網址。
+
+完整流程 daily_run()
+--------------------
+main.py 沒帶參數執行時預設跑 daily_run()：
+  Step1 → Step2（含重試機制）→ 記錄本週有幾篇文章判定為 error（跳過未評分，
+  需人工檢查）→ Step3 → Step4。
+  任何一步失敗都會用 logger.error 明確記錄，不會悄悄跳過（對應
+  CLAUDE.md 的 Rule 12：Fail loud）。
